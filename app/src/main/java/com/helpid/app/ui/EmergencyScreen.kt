@@ -56,7 +56,8 @@ data class EmergencyContact(
 fun EmergencyScreen(
     userId: String,
     onShowQRClick: () -> Unit = {},
-    onEditClick: () -> Unit = {}
+    onEditClick: () -> Unit = {},
+    onLanguageClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val repository = remember { FirebaseRepository() }
@@ -382,7 +383,7 @@ fun EmergencyScreen(
             Button(
                 onClick = onEditClick,
                 modifier = Modifier
-                    .fillMaxWidth(0.7f)
+                    .fillMaxWidth(0.48f)
                     .height(40.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -391,6 +392,25 @@ fun EmergencyScreen(
             ) {
                 Text(
                     text = "Edit",
+                    fontWeight = FontWeight.Light,
+                    fontSize = 12.sp,
+                    color = Color(0xFF999999)
+                )
+            }
+
+            // Language Button
+            Button(
+                onClick = onLanguageClick,
+                modifier = Modifier
+                    .fillMaxWidth(0.48f)
+                    .height(40.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent
+                )
+            ) {
+                Text(
+                    text = "🌐",
                     fontWeight = FontWeight.Light,
                     fontSize = 12.sp,
                     color = Color(0xFF999999)

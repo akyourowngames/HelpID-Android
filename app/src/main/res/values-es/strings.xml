@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HelpID</string>
+    
+    <!-- Emergency Screen -->
+    <string name="emergency_id">ID de Emergencia</string>
+    <string name="for_medical_emergencies">Para usar en emergencias médicas</string>
+    <string name="full_name">Nombre Completo</string>
+    <string name="blood_group">Grupo Sanguíneo</string>
+    <string name="medical_conditions">Condiciones Médicas</string>
+    <string name="updated">Actualizado: %s</string>
+    <string name="emergency_contacts">Contactos de Emergencia</string>
+    <string name="call_emergency">LLAMAR EMERGENCIA • 112</string>
+    <string name="show_qr_code">Mostrar Código QR</string>
+    <string name="edit">Editar</string>
+    
+    <!-- Edit Profile Screen -->
+    <string name="edit_profile">Editar Perfil</string>
+    <string name="update_emergency_information">Actualiza tu información de emergencia</string>
+    <string name="emergency_contact_1">Contacto de Emergencia 1</string>
+    <string name="emergency_contact_2">Contacto de Emergencia 2</string>
+    <string name="phone">Teléfono</string>
+    <string name="one_per_line">Uno por línea</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    
+    <!-- QR Screen -->
+    <string name="emergency_access">Acceso de Emergencia</string>
+    <string name="scan_to_view">Escanea para ver la información de emergencia</string>
+    <string name="scan_this_code">Escanea este código para acceder a tu información de emergencia</string>
+    <string name="back">ATRÁS</string>
+    
+    <!-- Language Selection -->
+    <string name="select_language">Seleccionar Idioma</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_hindi">हिंदी</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+</resources>
