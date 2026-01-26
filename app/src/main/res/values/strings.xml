@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HelpID</string>
+    <string name="emergency_header">EMERGENCY</string>
+    <string name="name_label">Name</string>
+    <string name="blood_group_label">Blood Group</string>
+    <string name="medical_notes_label">Medical Notes</string>
+    <string name="call_emergency">Call Emergency</string>
+    <string name="edit_profile">Edit Profile</string>
+</resources>
