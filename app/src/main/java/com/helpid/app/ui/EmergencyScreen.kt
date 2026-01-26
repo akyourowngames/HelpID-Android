@@ -112,31 +112,51 @@ fun EmergencyScreen(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header
-        Column(
+        // Header with Language Button
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFF1A1A1A))
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Emergency ID",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Light,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.5.sp
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "For use in medical emergencies",
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.3.sp
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Emergency ID",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Light,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.5.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "For use in medical emergencies",
+                    fontSize = 12.sp,
+                    color = Color.White.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.3.sp
+                )
+            }
+            // Language/Settings Button
+            Button(
+                onClick = onLanguageClick,
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF333333)
+                )
+            ) {
+                Text(
+                    text = "🌐",
+                    fontSize = 20.sp
+                )
+            }
         }
 
         // Personal Information Card
@@ -383,37 +403,18 @@ fun EmergencyScreen(
             Button(
                 onClick = onEditClick,
                 modifier = Modifier
-                    .fillMaxWidth(0.48f)
-                    .height(40.dp),
-                shape = RoundedCornerShape(8.dp),
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent
+                    containerColor = Color(0xFFF5F5F5)
                 )
             ) {
                 Text(
-                    text = "Edit",
-                    fontWeight = FontWeight.Light,
-                    fontSize = 12.sp,
-                    color = Color(0xFF999999)
-                )
-            }
-
-            // Language Button
-            Button(
-                onClick = onLanguageClick,
-                modifier = Modifier
-                    .fillMaxWidth(0.48f)
-                    .height(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent
-                )
-            ) {
-                Text(
-                    text = "🌐",
-                    fontWeight = FontWeight.Light,
-                    fontSize = 12.sp,
-                    color = Color(0xFF999999)
+                    text = "Edit Profile",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                    color = Color(0xFF1A1A1A)
                 )
             }
         }

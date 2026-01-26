@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.draw.shadow
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import com.helpid.app.R
 import com.helpid.app.ui.theme.HelpIDTheme
 
 fun generateQRCode(text: String, size: Int = 512): Bitmap {
@@ -76,7 +78,7 @@ fun QRScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Emergency Access",
+                text = stringResource(R.string.emergency_access),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Light,
                 color = ComposeColor.White,
@@ -85,7 +87,7 @@ fun QRScreen(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Scan to view emergency information",
+                text = stringResource(R.string.scan_to_view),
                 fontSize = 12.sp,
                 color = ComposeColor.White.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
@@ -116,7 +118,7 @@ fun QRScreen(
 
         // Info Section - Brief & Clear
         Text(
-            text = "Scan this code to access emergency information",
+            text = stringResource(R.string.scan_this_code),
             fontSize = 13.sp,
             color = ComposeColor(0xFF666666),
             textAlign = TextAlign.Center,
@@ -141,7 +143,7 @@ fun QRScreen(
             )
         ) {
             Text(
-                text = "BACK",
+                text = stringResource(R.string.back),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 letterSpacing = 0.5.sp
