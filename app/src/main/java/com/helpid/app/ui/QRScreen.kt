@@ -51,8 +51,11 @@ fun generateQRCode(text: String, size: Int = 512): Bitmap {
 }
 
 @Composable
-fun QRScreen(onBackClick: () -> Unit = {}) {
-    val qrContent = "https://helpid.app/emergency/johndoe"
+fun QRScreen(
+    userId: String,
+    onBackClick: () -> Unit = {}
+) {
+    val qrContent = "https://helpid.app/e/$userId"
     val qrBitmap = generateQRCode(qrContent, 512)
 
     Column(
@@ -153,6 +156,6 @@ fun QRScreen(onBackClick: () -> Unit = {}) {
 @Composable
 fun QRScreenPreview() {
     HelpIDTheme {
-        QRScreen()
+        QRScreen(userId = "demo-user-id")
     }
 }

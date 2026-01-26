@@ -25,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,7 +38,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.helpid.app.data.FirebaseRepository
+import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class EmergencyContact(
     val name: String,
@@ -45,19 +53,55 @@ data class EmergencyContact(
 )
 
 @Composable
-fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
+fun EmergencyScreen(
+    userId: String,
+    onShowQRClick: () -> Unit = {},
+    onEditClick: () -> Unit = {}
+) {
     val context = LocalContext.current
+    val repository = remember { FirebaseRepository() }
     
-    val emergencyContacts = listOf(
-        EmergencyContact("Father", "+91 98765 43210"),
-        EmergencyContact("Mother", "+91 87654 32109")
-    )
+    val userProfile = remember { mutableStateOf<UserProfile?>(null) }
+    val isLoading = remember { mutableStateOf(true) }
     
-    val medicalNotes = listOf(
-        "Allergic to Penicillin",
-        "Diabetic",
-        "Takes Aspirin daily"
-    )
+    // Load profile from Firebase
+    LaunchedEffect(userId) {
+        if (userId.isNotEmpty()) {
+            withContext(Dispatchers.IO) {
+                val profile = repository.getUserProfile(userId)
+                userProfile.value = profile
+                isLoading.value = false
+            }
+        }
+    }
+    
+    if (isLoading.value) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFFAFAFA)),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Loading...", fontSize = 14.sp, color = Color(0xFF999999))
+        }
+        return
+    }
+
+    val profile = userProfile.value ?: return
+    
+    val emergencyContacts = profile.emergencyContacts.map {
+        EmergencyContact(it.name, it.phone)
+    }
+    
+    val medicalNotes = profile.medicalNotes
+    
+    // Format last updated
+    val lastUpdatedText = remember(profile.lastUpdated) {
+        val date = Date(profile.lastUpdated)
+        val sdf = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+        "Updated: ${sdf.format(date)}"
+    }
 
     Column(
         modifier = Modifier
@@ -67,7 +111,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header - Authoritative
+        // Header
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -94,7 +138,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
             )
         }
 
-        // Personal Information Card - Compact & Clear
+        // Personal Information Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -112,7 +156,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Name + Blood Group Badge Row
+                // Name + Blood Group Badge
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -128,13 +172,12 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "John Doe",
+                            text = profile.name,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Light,
                             color = Color(0xFF1A1A1A)
                         )
                     }
-                    // Blood Group Badge
                     Box(
                         modifier = Modifier
                             .background(Color(0xFFD32F2F), RoundedCornerShape(6.dp))
@@ -142,7 +185,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "O+",
+                            text = profile.bloodGroup,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
@@ -150,7 +193,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                     }
                 }
 
-                // Medical Conditions Section
+                // Medical Conditions
                 Column {
                     Text(
                         text = "Medical Conditions",
@@ -184,6 +227,15 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                         }
                     }
                 }
+                
+                // Last Updated
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = lastUpdatedText,
+                    fontSize = 10.sp,
+                    color = Color(0xFF999999),
+                    fontWeight = FontWeight.Light
+                )
             }
         }
 
@@ -271,7 +323,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Action Buttons - Clear Hierarchy
+        // Action Buttons
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -279,7 +331,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Primary: Emergency Call Button
+            // Primary: Emergency Call
             Button(
                 onClick = {
                     val intent = Intent(Intent.ACTION_CALL).apply {
@@ -326,9 +378,9 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                 )
             }
 
-            // Tertiary: Edit (Low Emphasis)
+            // Tertiary: Edit
             Button(
-                onClick = { /* TODO: Navigate to edit screen */ },
+                onClick = onEditClick,
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
                     .height(40.dp),
@@ -354,6 +406,6 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
 @Composable
 fun EmergencyScreenPreview() {
     HelpIDTheme {
-        EmergencyScreen()
+        EmergencyScreen(userId = "demo-user-id")
     }
 }
