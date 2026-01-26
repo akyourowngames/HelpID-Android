@@ -23,7 +23,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -33,11 +37,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.helpid.app.R
 import com.helpid.app.data.FirebaseRepository
 import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
@@ -185,7 +191,7 @@ fun EmergencyScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Full Name",
+                            text = stringResource(R.string.full_name),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF999999),
@@ -217,7 +223,7 @@ fun EmergencyScreen(
                 // Medical Conditions
                 Column {
                     Text(
-                        text = "Medical Conditions",
+                        text = stringResource(R.string.medical_conditions),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF999999),
@@ -279,7 +285,7 @@ fun EmergencyScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Emergency Contacts",
+                    text = stringResource(R.string.emergency_contacts),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF999999),
@@ -373,7 +379,7 @@ fun EmergencyScreen(
                 )
             ) {
                 Text(
-                    text = "CALL EMERGENCY • 112",
+                    text = stringResource(R.string.call_emergency),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
                     letterSpacing = 0.5.sp
@@ -392,7 +398,7 @@ fun EmergencyScreen(
                 )
             ) {
                 Text(
-                    text = "Show QR Code",
+                    text = stringResource(R.string.show_qr_code),
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.sp,
                     color = Color(0xFF1A1A1A)
@@ -411,7 +417,7 @@ fun EmergencyScreen(
                 )
             ) {
                 Text(
-                    text = "Edit Profile",
+                    text = stringResource(R.string.edit_profile),
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.sp,
                     color = Color(0xFF1A1A1A)

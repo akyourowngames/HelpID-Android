@@ -19,6 +19,7 @@
     <string name="update_emergency_information">Actualiza tu información de emergencia</string>
     <string name="emergency_contact_1">Contacto de Emergencia 1</string>
     <string name="emergency_contact_2">Contacto de Emergencia 2</string>
+    <string name="name">Nombre</string>
     <string name="phone">Teléfono</string>
     <string name="one_per_line">Uno por línea</string>
     <string name="save">Guardar</string>

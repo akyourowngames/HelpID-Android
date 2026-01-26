@@ -28,10 +28,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.helpid.app.R
 import com.helpid.app.utils.LanguageManager
 
 @Composable
@@ -59,7 +61,7 @@ fun LanguageSelectionScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        ) {stringResource(R.string.select_language)
             Text(
                 text = "Select Language",
                 fontSize = 22.sp,
@@ -148,7 +150,7 @@ fun LanguageSelectionScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent
                 )
-            ) {
+            ) {stringResource(R.string.back)
                 Text(
                     text = "Back",
                     fontWeight = FontWeight.Light,

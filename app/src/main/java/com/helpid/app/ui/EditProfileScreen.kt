@@ -145,12 +145,12 @@ fun EditProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     // Name Field
-                    FormField("Full Name", name.value) { name.value = it }
-                    FormField("Blood Group", bloodGroup.value) { bloodGroup.value = it }
+                    FormField(stringResource(R.string.full_name), name.value) { name.value = it }
+                    FormField(stringResource(R.string.blood_group), bloodGroup.value) { bloodGroup.value = it }
 
                     // Medical Notes
                     Text(
-                        text = "Medical Conditions",
+                        text = stringResource(R.string.medical_conditions),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF999999),
@@ -162,7 +162,7 @@ fun EditProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(100.dp),
-                        placeholder = { Text("One per line") },
+                        placeholder = { Text(stringResource(R.string.one_per_line)) },
                         colors = TextFieldDefaults.colors(
                             unfocusedContainerColor = Color(0xFFF5F5F5),
                             focusedContainerColor = Color.White,
@@ -176,25 +176,25 @@ fun EditProfileScreen(
 
                     // Emergency Contacts
                     Text(
-                        text = "Emergency Contact 1",
+                        text = stringResource(R.string.emergency_contact_1),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF999999),
                         letterSpacing = 0.3.sp
                     )
-                    FormField("Name", emergencyContact1Name.value) { emergencyContact1Name.value = it }
-                    FormField("Phone", emergencyContact1Phone.value) { emergencyContact1Phone.value = it }
+                    FormField(stringResource(R.string.full_name), emergencyContact1Name.value) { emergencyContact1Name.value = it }
+                    FormField(stringResource(R.string.phone), emergencyContact1Phone.value) { emergencyContact1Phone.value = it }
 
                     Text(
-                        text = "Emergency Contact 2",
+                        text = stringResource(R.string.emergency_contact_2),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF999999),
                         letterSpacing = 0.3.sp,
                         modifier = Modifier.padding(top = 8.dp)
                     )
-                    FormField("Name", emergencyContact2Name.value) { emergencyContact2Name.value = it }
-                    FormField("Phone", emergencyContact2Phone.value) { emergencyContact2Phone.value = it }
+                    FormField(stringResource(R.string.full_name), emergencyContact2Name.value) { emergencyContact2Name.value = it }
+                    FormField(stringResource(R.string.phone), emergencyContact2Phone.value) { emergencyContact2Phone.value = it }
                 }
             }
 
@@ -246,7 +246,7 @@ fun EditProfileScreen(
                     )
                 ) {
                     Text(
-                        text = if (isSaving.value) "SAVING..." else "SAVE CHANGES",
+                        text = if (isSaving.value) "SAVING..." else stringResource(R.string.save),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp,
                         letterSpacing = 0.5.sp
@@ -267,7 +267,7 @@ fun EditProfileScreen(
                     )
                 ) {
                     Text(
-                        text = "Cancel",
+                        text = stringResource(R.string.cancel),
                         fontWeight = FontWeight.Light,
                         fontSize = 12.sp,
                         color = Color(0xFF999999)

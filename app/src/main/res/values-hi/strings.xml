@@ -19,6 +19,7 @@
     <string name="update_emergency_information">अपनी आपातकालीन जानकारी अपडेट करें</string>
     <string name="emergency_contact_1">आपातकालीन संपर्क 1</string>
     <string name="emergency_contact_2">आपातकालीन संपर्क 2</string>
+    <string name="name">नाम</string>
     <string name="phone">फोन</string>
     <string name="one_per_line">एक प्रति पंक्ति</string>
     <string name="save">सहेजें</string>
