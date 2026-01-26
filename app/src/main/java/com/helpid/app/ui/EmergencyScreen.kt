@@ -67,31 +67,26 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Minimal Header with Icon
+        // Header - Authoritative
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFF1A1A1A))
-                .padding(24.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "🆘",
-                fontSize = 40.sp
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
                 text = "Emergency ID",
-                fontSize = 24.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Light,
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 letterSpacing = 0.5.sp
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Critical Information",
+                text = "For use in medical emergencies",
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
@@ -99,7 +94,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
             )
         }
 
-        // Personal Information Card - Minimal Design
+        // Personal Information Card - Compact & Clear
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -114,46 +109,43 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Name Section
-                Column {
-                    Text(
-                        text = "Full Name",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF999999),
-                        letterSpacing = 0.3.sp
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "John Doe",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Light,
-                        color = Color(0xFF1A1A1A)
-                    )
-                }
-
-                // Blood Group Section
+                // Name + Blood Group Badge Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Blood Group",
+                            text = "Full Name",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF999999),
                             letterSpacing = 0.3.sp
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "John Doe",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Light,
+                            color = Color(0xFF1A1A1A)
+                        )
+                    }
+                    // Blood Group Badge
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFFD32F2F), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
                             text = "O+",
-                            fontSize = 18.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFD32F2F)
+                            color = Color.White
                         )
                     }
                 }
@@ -168,8 +160,8 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                         letterSpacing = 0.3.sp
                     )
                     Column(
-                        modifier = Modifier.padding(top = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         medicalNotes.forEach { note ->
                             Row(
@@ -210,8 +202,8 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     text = "Emergency Contacts",
@@ -242,21 +234,23 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                                     // Handle case where call permission is not granted
                                 }
                             }
-                            .padding(14.dp)
+                            .padding(12.dp)
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = contact.name,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = Color(0xFF1A1A1A)
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(3.dp))
                                 Text(
                                     text = contact.phoneNumber,
                                     fontSize = 12.sp,
@@ -265,10 +259,9 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                                 )
                             }
                             Text(
-                                text = "→",
+                                text = "☎",
                                 fontSize = 18.sp,
-                                color = Color(0xFFD32F2F),
-                                fontWeight = FontWeight.Light
+                                color = Color(0xFFD32F2F)
                             )
                         }
                     }
@@ -276,9 +269,9 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Action Buttons
+        // Action Buttons - Clear Hierarchy
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -286,7 +279,7 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Emergency Call Button - Prominent
+            // Primary: Emergency Call Button
             Button(
                 onClick = {
                     val intent = Intent(Intent.ACTION_CALL).apply {
@@ -314,52 +307,46 @@ fun EmergencyScreen(onShowQRClick: () -> Unit = {}) {
                 )
             }
 
-            // Secondary Actions Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            // Secondary: QR Code
+            Button(
+                onClick = onShowQRClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF5F5F5)
+                )
             ) {
-                // Edit Profile Button
-                Button(
-                    onClick = { /* TODO: Navigate to edit screen */ },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFF0F0F0)
-                    )
-                ) {
-                    Text(
-                        text = "Edit",
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp,
-                        color = Color(0xFF1A1A1A)
-                    )
-                }
+                Text(
+                    text = "Show QR Code",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                    color = Color(0xFF1A1A1A)
+                )
+            }
 
-                // Show Emergency QR Button
-                Button(
-                    onClick = onShowQRClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1A1A1A)
-                    )
-                ) {
-                    Text(
-                        text = "QR Code",
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp,
-                        color = Color.White
-                    )
-                }
+            // Tertiary: Edit (Low Emphasis)
+            Button(
+                onClick = { /* TODO: Navigate to edit screen */ },
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(40.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent
+                )
+            ) {
+                Text(
+                    text = "Edit",
+                    fontWeight = FontWeight.Light,
+                    fontSize = 12.sp,
+                    color = Color(0xFF999999)
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

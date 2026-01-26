@@ -63,31 +63,26 @@ fun QRScreen(onBackClick: () -> Unit = {}) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header
+        // Header - Functional
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(ComposeColor(0xFF1A1A1A))
-                .padding(24.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "📱",
-                fontSize = 40.sp
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Emergency QR",
-                fontSize = 24.sp,
+                text = "Emergency Access",
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Light,
                 color = ComposeColor.White,
                 textAlign = TextAlign.Center,
                 letterSpacing = 0.5.sp
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Scan for instant access",
+                text = "Scan to view emergency information",
                 fontSize = 12.sp,
                 color = ComposeColor.White.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
@@ -114,34 +109,22 @@ fun QRScreen(onBackClick: () -> Unit = {}) {
             )
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Info Section
-        Column(
+        // Info Section - Brief & Clear
+        Text(
+            text = "Scan this code to access emergency information",
+            fontSize = 13.sp,
+            color = ComposeColor(0xFF666666),
+            textAlign = TextAlign.Center,
+            lineHeight = 19.sp,
+            fontWeight = FontWeight.Light,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "How It Works",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = ComposeColor(0xFF1A1A1A),
-                letterSpacing = 0.3.sp
-            )
-            Text(
-                text = "Anyone can scan this QR code to access your emergency information, even if your phone is locked or offline.",
-                fontSize = 13.sp,
-                color = ComposeColor(0xFF666666),
-                textAlign = TextAlign.Center,
-                lineHeight = 19.sp,
-                fontWeight = FontWeight.Light
-            )
-        }
+                .fillMaxWidth(0.85f)
+                .padding(horizontal = 16.dp)
+        )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         // Back Button
         Button(
@@ -155,7 +138,7 @@ fun QRScreen(onBackClick: () -> Unit = {}) {
             )
         ) {
             Text(
-                text = "BACK TO ID CARD",
+                text = "BACK",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 letterSpacing = 0.5.sp
