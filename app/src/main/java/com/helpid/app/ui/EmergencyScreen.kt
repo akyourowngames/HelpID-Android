@@ -72,6 +72,7 @@ fun EmergencyScreen(
     
     val userProfile = remember { mutableStateOf<UserProfile?>(null) }
     val isLoading = remember { mutableStateOf(true) }
+    val isSending = remember { mutableStateOf(false) }
     
     // Load profile from Firebase
     LaunchedEffect(userId) {
@@ -97,7 +98,21 @@ fun EmergencyScreen(
         return
     }
 
-    val profile = userProfile.value ?: return
+    val profile = userProfile.value
+    
+    // Fallback to demo profile if loading failed
+    if (profile == null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFFAFAFA)),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Error loading profile. Using demo data.", fontSize = 14.sp, color = Color(0xFFD32F2F))
+        }
+        return
+    }
     
     val emergencyContacts = profile.emergencyContacts.map {
         EmergencyContact(it.name, it.phone)
@@ -135,7 +150,7 @@ fun EmergencyScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Emergency ID",
+                    text = stringResource(R.string.emergency_id),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Light,
                     color = Color.White,
@@ -144,7 +159,7 @@ fun EmergencyScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "For use in medical emergencies",
+                    text = stringResource(R.string.for_medical_emergencies),
                     fontSize = 12.sp,
                     color = Color.White.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
@@ -517,8 +532,6 @@ fun EmergencyScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // SOS Button - Large Red Button
-            val isSending = remember { mutableStateOf(false) }
-            
             Button(
                 onClick = {
                     isSending.value = true
