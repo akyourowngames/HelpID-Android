@@ -59,6 +59,9 @@ dependencies {
     // Biometrics
     implementation("androidx.biometric:biometric:1.1.0")
 
+    // PDF Generation
+    implementation("com.itextpdf:itextg:5.5.10")
+
     // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

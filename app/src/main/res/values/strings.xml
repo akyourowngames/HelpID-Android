@@ -42,6 +42,14 @@
     <string name="scan_this_code">Scan this code to access emergency information</string>
     <string name="back">BACK</string>
     
+    <!-- Share & Export -->
+    <string name="export_pdf">Export as PDF</string>
+    <string name="share_emergency_info">Share Emergency Info</string>
+    <string name="share_whatsapp">Share via WhatsApp</string>
+    <string name="share_sms">Share via SMS</string>
+    <string name="share_email">Share via Email</string>
+    <string name="pdf_exported">Profile exported as PDF</string>
+    
     <!-- Language Selection -->
     <string name="select_language">Select Language</string>
     <string name="language_english">English</string>

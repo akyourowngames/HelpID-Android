@@ -42,6 +42,14 @@
     <string name="scan_this_code">अपनी आपातकालीन जानकारी तक पहुंचने के लिए इस कोड को स्कैन करें</string>
     <string name="back">वापस</string>
     
+    <!-- Share & Export -->
+    <string name="export_pdf">PDF के रूप में निर्यात करें</string>
+    <string name="share_emergency_info">आपातकालीन जानकारी साझा करें</string>
+    <string name="share_whatsapp">WhatsApp के माध्यम से साझा करें</string>
+    <string name="share_sms">SMS के माध्यम से साझा करें</string>
+    <string name="share_email">ईमेल के माध्यम से साझा करें</string>
+    <string name="pdf_exported">प्रोफ़ाइल PDF के रूप में निर्यात की गई</string>
+    
     <!-- Language Selection -->
     <string name="select_language">भाषा चुनें</string>
     <string name="language_english">English</string>

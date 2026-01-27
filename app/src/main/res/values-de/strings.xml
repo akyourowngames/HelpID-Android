@@ -42,6 +42,14 @@
     <string name="scan_this_code">Scannen Sie diesen Code, um auf Ihre Notfallinformationen zuzugreifen</string>
     <string name="back">ZURÜCK</string>
     
+    <!-- Share & Export -->
+    <string name="export_pdf">Als PDF exportieren</string>
+    <string name="share_emergency_info">Notfallinformationen teilen</string>
+    <string name="share_whatsapp">Über WhatsApp teilen</string>
+    <string name="share_sms">Über SMS teilen</string>
+    <string name="share_email">Über E-Mail teilen</string>
+    <string name="pdf_exported">Profil als PDF exportiert</string>
+    
     <!-- Language Selection -->
     <string name="select_language">Sprache Wählen</string>
     <string name="language_english">English</string>

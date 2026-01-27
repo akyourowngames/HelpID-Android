@@ -42,6 +42,14 @@
     <string name="scan_this_code">Escanea este código para acceder a tu información de emergencia</string>
     <string name="back">ATRÁS</string>
     
+    <!-- Share & Export -->
+    <string name="export_pdf">Exportar como PDF</string>
+    <string name="share_emergency_info">Compartir Información de Emergencia</string>
+    <string name="share_whatsapp">Compartir via WhatsApp</string>
+    <string name="share_sms">Compartir via SMS</string>
+    <string name="share_email">Compartir via Email</string>
+    <string name="pdf_exported">Perfil exportado como PDF</string>
+    
     <!-- Language Selection -->
     <string name="select_language">Seleccionar Idioma</string>
     <string name="language_english">English</string>
