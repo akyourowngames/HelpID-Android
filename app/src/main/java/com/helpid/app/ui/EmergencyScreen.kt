@@ -51,6 +51,7 @@ import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -63,6 +64,7 @@ data class EmergencyContact(
 @Composable
 fun EmergencyScreen(
     userId: String,
+    initError: String? = null,
     onShowQRClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onLanguageClick: () -> Unit = {}
@@ -73,11 +75,11 @@ fun EmergencyScreen(
     val userProfile = remember { mutableStateOf(UserProfile.default(userId)) }
     val isLoading = remember { mutableStateOf(true) }
     val isSending = remember { mutableStateOf(false) }
-    val errorMessage = remember { mutableStateOf<String?>(null) }
+    val loadError = remember { mutableStateOf(initError) }
     
     android.util.Log.d("EmergencyScreen", "Rendering with userId=$userId")
     
-    // Load profile from Firebase
+    // Load profile from Firebase with timeout
     LaunchedEffect(userId) {
         android.util.Log.d("EmergencyScreen", "LaunchedEffect started with userId=$userId")
         try {
@@ -85,12 +87,15 @@ fun EmergencyScreen(
                 withContext(Dispatchers.IO) {
                     try {
                         android.util.Log.d("EmergencyScreen", "Fetching profile from Firebase")
-                        val profile = repository.getUserProfile(userId)
-                        android.util.Log.d("EmergencyScreen", "Profile loaded: ${profile.name}")
-                        userProfile.value = profile
+                        // Also add timeout to profile loading
+                        withTimeout(5000L) {  // 5 second timeout
+                            val profile = repository.getUserProfile(userId)
+                            android.util.Log.d("EmergencyScreen", "Profile loaded: ${profile.name}")
+                            userProfile.value = profile
+                        }
                     } catch (e: Exception) {
                         android.util.Log.e("EmergencyScreen", "Error loading profile: ${e.message}", e)
-                        errorMessage.value = e.message
+                        loadError.value = "Profile load error: ${e.message}"
                         userProfile.value = UserProfile.default(userId)
                     }
                 }
@@ -100,7 +105,7 @@ fun EmergencyScreen(
             }
         } catch (e: Exception) {
             android.util.Log.e("EmergencyScreen", "Exception in LaunchedEffect: ${e.message}", e)
-            errorMessage.value = e.message
+            loadError.value = e.message
         } finally {
             isLoading.value = false
             android.util.Log.d("EmergencyScreen", "LaunchedEffect finished, isLoading=false")

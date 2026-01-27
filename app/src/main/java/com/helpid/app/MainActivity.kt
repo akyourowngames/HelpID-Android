@@ -30,7 +30,9 @@ import com.helpid.app.ui.LanguageSelectionScreen
 import com.helpid.app.ui.QRScreen
 import com.helpid.app.ui.theme.HelpIDTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 private const val TAG = "HelpID"
 
@@ -62,82 +64,57 @@ fun AppNavigation() {
     
     val currentScreen = remember { mutableStateOf("emergency") }
     val userId = remember { mutableStateOf("") }
-    val isInitialized = remember { mutableStateOf(false) }
-    val initError = remember { mutableStateOf<String?>(null) }
-    
-    // Initialize Firebase and create anonymous user
+    val isInitError = remember { mutableStateOf<String?>(null) }
+    val repository = remember { FirebaseRepository() }
+
+    // Initialize Firebase with timeout
     LaunchedEffect(Unit) {
-        Log.d(TAG, "LaunchedEffect starting initialization")
+        Log.d(TAG, "LaunchedEffect: Starting Firebase initialization")
         try {
             withContext(Dispatchers.IO) {
                 try {
-                    val repository = FirebaseRepository()
-                    Log.d(TAG, "FirebaseRepository created")
-                    
-                    val initUserId = repository.initializeUser()
-                    Log.d(TAG, "Firebase initialized, userId: $initUserId")
-                    
-                    if (initUserId.isNotEmpty()) {
-                        userId.value = initUserId
-                    } else {
-                        initError.value = "Failed to get user ID"
-                        Log.w(TAG, "Failed to get user ID")
+                    Log.d(TAG, "Attempting initialization with 10 second timeout")
+                    withTimeout(10000L) {  // 10 second timeout
+                        val initUserId = repository.initializeUser()
+                        Log.d(TAG, "Firebase initialized successfully, userId: $initUserId")
+                        
+                        if (initUserId.isNotEmpty()) {
+                            userId.value = initUserId
+                        } else {
+                            Log.w(TAG, "userId is empty")
+                            isInitError.value = "Failed to get user ID"
+                        }
                     }
+                } catch (e: TimeoutCancellationException) {
+                    Log.w(TAG, "Firebase initialization timed out after 10 seconds")
+                    isInitError.value = "Initialization timeout - using offline mode"
+                    // Use a demo/offline user ID
+                    userId.value = "offline_user_${System.currentTimeMillis()}"
                 } catch (e: Exception) {
                     Log.e(TAG, "Error during Firebase init: ${e.message}", e)
-                    initError.value = e.message ?: "Unknown error"
+                    isInitError.value = e.message ?: "Unknown error"
+                    // Use offline user ID on any error
+                    userId.value = "offline_user_${System.currentTimeMillis()}"
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error in LaunchedEffect: ${e.message}", e)
-            initError.value = e.message ?: "Unknown error"
-        } finally {
-            isInitialized.value = true
-            Log.d(TAG, "Initialization complete. isInitialized=${isInitialized.value}, userId=${userId.value}")
+            Log.e(TAG, "Exception in LaunchedEffect: ${e.message}", e)
+            isInitError.value = e.message ?: "Unknown error"
+            userId.value = "offline_user_${System.currentTimeMillis()}"
         }
     }
 
-    // Show loading or content
-    if (!isInitialized.value) {
-        Log.d(TAG, "Showing initialization loading screen")
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFFAFAFA)),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator(color = Color(0xFFD32F2F))
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Initializing app...", fontSize = 14.sp, color = Color(0xFF999999))
-            if (initError.value != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Status: ${initError.value}", fontSize = 11.sp, color = Color(0xFF666666))
-            }
-        }
-        return
-    }
-
-    Log.d(TAG, "Initialization complete, rendering screen: ${currentScreen.value}")
-    
-    // Render appropriate screen
+    // Don't wait for initialization - go straight to emergency screen
+    // The profile loading happens inside EmergencyScreen
     when (currentScreen.value) {
         "emergency" -> {
-            Log.d(TAG, "Rendering EmergencyScreen with userId: ${userId.value}")
+            Log.d(TAG, "Rendering EmergencyScreen")
             EmergencyScreen(
                 userId = userId.value,
-                onShowQRClick = { 
-                    Log.d(TAG, "QR click")
-                    currentScreen.value = "qr" 
-                },
-                onEditClick = { 
-                    Log.d(TAG, "Edit click")
-                    currentScreen.value = "edit" 
-                },
-                onLanguageClick = { 
-                    Log.d(TAG, "Language click")
-                    currentScreen.value = "language" 
-                }
+                initError = isInitError.value,
+                onShowQRClick = { currentScreen.value = "qr" },
+                onEditClick = { currentScreen.value = "edit" },
+                onLanguageClick = { currentScreen.value = "language" }
             )
         }
         "qr" -> {
