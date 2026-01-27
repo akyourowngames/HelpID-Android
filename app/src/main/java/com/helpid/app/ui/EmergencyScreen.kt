@@ -70,30 +70,44 @@ fun EmergencyScreen(
     val context = LocalContext.current
     val repository = remember { FirebaseRepository() }
     
-    val userProfile = remember { mutableStateOf<UserProfile?>(null) }
+    val userProfile = remember { mutableStateOf(UserProfile.default(userId)) }
     val isLoading = remember { mutableStateOf(true) }
     val isSending = remember { mutableStateOf(false) }
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+    
+    android.util.Log.d("EmergencyScreen", "Rendering with userId=$userId")
     
     // Load profile from Firebase
     LaunchedEffect(userId) {
+        android.util.Log.d("EmergencyScreen", "LaunchedEffect started with userId=$userId")
         try {
             if (userId.isNotEmpty()) {
                 withContext(Dispatchers.IO) {
                     try {
+                        android.util.Log.d("EmergencyScreen", "Fetching profile from Firebase")
                         val profile = repository.getUserProfile(userId)
+                        android.util.Log.d("EmergencyScreen", "Profile loaded: ${profile.name}")
                         userProfile.value = profile
                     } catch (e: Exception) {
                         android.util.Log.e("EmergencyScreen", "Error loading profile: ${e.message}", e)
+                        errorMessage.value = e.message
                         userProfile.value = UserProfile.default(userId)
                     }
                 }
             } else {
+                android.util.Log.d("EmergencyScreen", "UserId is empty, using default")
                 userProfile.value = UserProfile.default("")
             }
+        } catch (e: Exception) {
+            android.util.Log.e("EmergencyScreen", "Exception in LaunchedEffect: ${e.message}", e)
+            errorMessage.value = e.message
         } finally {
             isLoading.value = false
+            android.util.Log.d("EmergencyScreen", "LaunchedEffect finished, isLoading=false")
         }
     }
+    
+    android.util.Log.d("EmergencyScreen", "About to render: isLoading=${isLoading.value}")
     
     if (isLoading.value) {
         Column(
@@ -110,8 +124,8 @@ fun EmergencyScreen(
 
     val profile = userProfile.value
     
-    // Fallback to demo profile if loading failed
-    if (profile == null) {
+    // Fallback to demo profile if loading failed (profile should always be set now)
+    if (profile.userId.isEmpty()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()

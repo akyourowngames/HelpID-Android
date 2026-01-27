@@ -1,6 +1,7 @@
 package com.helpid.app
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -28,54 +29,77 @@ import com.helpid.app.ui.EmergencyScreen
 import com.helpid.app.ui.LanguageSelectionScreen
 import com.helpid.app.ui.QRScreen
 import com.helpid.app.ui.theme.HelpIDTheme
-import com.helpid.app.utils.LanguageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+private const val TAG = "HelpID"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            HelpIDTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppNavigation()
+        Log.d(TAG, "MainActivity onCreate called")
+        try {
+            setContent {
+                HelpIDTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        AppNavigation()
+                    }
                 }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in setContent: ${e.message}", e)
+            e.printStackTrace()
         }
     }
 }
 
 @Composable
 fun AppNavigation() {
+    Log.d(TAG, "AppNavigation composable called")
+    
     val currentScreen = remember { mutableStateOf("emergency") }
     val userId = remember { mutableStateOf("") }
     val isInitialized = remember { mutableStateOf(false) }
     val initError = remember { mutableStateOf<String?>(null) }
-    val repository = remember { FirebaseRepository() }
-
+    
     // Initialize Firebase and create anonymous user
     LaunchedEffect(Unit) {
+        Log.d(TAG, "LaunchedEffect starting initialization")
         try {
             withContext(Dispatchers.IO) {
-                val initUserId = repository.initializeUser()
-                if (initUserId.isNotEmpty()) {
-                    userId.value = initUserId
-                    isInitialized.value = true
-                } else {
-                    initError.value = "Failed to initialize user"
+                try {
+                    val repository = FirebaseRepository()
+                    Log.d(TAG, "FirebaseRepository created")
+                    
+                    val initUserId = repository.initializeUser()
+                    Log.d(TAG, "Firebase initialized, userId: $initUserId")
+                    
+                    if (initUserId.isNotEmpty()) {
+                        userId.value = initUserId
+                    } else {
+                        initError.value = "Failed to get user ID"
+                        Log.w(TAG, "Failed to get user ID")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error during Firebase init: ${e.message}", e)
+                    initError.value = e.message ?: "Unknown error"
                 }
             }
         } catch (e: Exception) {
+            Log.e(TAG, "Error in LaunchedEffect: ${e.message}", e)
             initError.value = e.message ?: "Unknown error"
-            e.printStackTrace()
+        } finally {
+            isInitialized.value = true
+            Log.d(TAG, "Initialization complete. isInitialized=${isInitialized.value}, userId=${userId.value}")
         }
     }
 
+    // Show loading or content
     if (!isInitialized.value) {
-        // Show loading state
+        Log.d(TAG, "Showing initialization loading screen")
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -83,69 +107,56 @@ fun AppNavigation() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CircularProgressIndicator(
-                color = Color(0xFFD32F2F)
-            )
+            CircularProgressIndicator(color = Color(0xFFD32F2F))
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Initializing...",
-                fontSize = 14.sp,
-                color = Color(0xFF999999)
-            )
+            Text("Initializing app...", fontSize = 14.sp, color = Color(0xFF999999))
             if (initError.value != null) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Error: ${initError.value}",
-                    fontSize = 12.sp,
-                    color = Color(0xFFD32F2F)
-                )
+                Text("Status: ${initError.value}", fontSize = 11.sp, color = Color(0xFF666666))
             }
         }
         return
     }
 
+    Log.d(TAG, "Initialization complete, rendering screen: ${currentScreen.value}")
+    
+    // Render appropriate screen
     when (currentScreen.value) {
         "emergency" -> {
-            if (userId.value.isNotEmpty()) {
-                EmergencyScreen(
-                    userId = userId.value,
-                    onShowQRClick = { currentScreen.value = "qr" },
-                    onEditClick = { currentScreen.value = "edit" },
-                    onLanguageClick = { currentScreen.value = "language" }
-                )
-            } else {
-                // Still loading
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFFFAFAFA)),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(color = Color(0xFFD32F2F))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Loading profile...", fontSize = 14.sp, color = Color(0xFF999999))
+            Log.d(TAG, "Rendering EmergencyScreen with userId: ${userId.value}")
+            EmergencyScreen(
+                userId = userId.value,
+                onShowQRClick = { 
+                    Log.d(TAG, "QR click")
+                    currentScreen.value = "qr" 
+                },
+                onEditClick = { 
+                    Log.d(TAG, "Edit click")
+                    currentScreen.value = "edit" 
+                },
+                onLanguageClick = { 
+                    Log.d(TAG, "Language click")
+                    currentScreen.value = "language" 
                 }
-            }
+            )
         }
         "qr" -> {
-            if (userId.value.isNotEmpty()) {
-                QRScreen(
-                    userId = userId.value,
-                    onBackClick = { currentScreen.value = "emergency" }
-                )
-            }
+            Log.d(TAG, "Rendering QRScreen")
+            QRScreen(
+                userId = userId.value,
+                onBackClick = { currentScreen.value = "emergency" }
+            )
         }
         "edit" -> {
-            if (userId.value.isNotEmpty()) {
-                EditProfileScreen(
-                    userId = userId.value,
-                    onBackClick = { currentScreen.value = "emergency" },
-                    onSaveSuccess = { currentScreen.value = "emergency" }
-                )
-            }
+            Log.d(TAG, "Rendering EditProfileScreen")
+            EditProfileScreen(
+                userId = userId.value,
+                onBackClick = { currentScreen.value = "emergency" },
+                onSaveSuccess = { currentScreen.value = "emergency" }
+            )
         }
         "language" -> {
+            Log.d(TAG, "Rendering LanguageSelectionScreen")
             LanguageSelectionScreen(
                 onLanguageSelected = { currentScreen.value = "emergency" },
                 onBackClick = { currentScreen.value = "emergency" }
