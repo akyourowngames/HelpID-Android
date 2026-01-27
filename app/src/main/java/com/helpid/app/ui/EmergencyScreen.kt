@@ -76,12 +76,22 @@ fun EmergencyScreen(
     
     // Load profile from Firebase
     LaunchedEffect(userId) {
-        if (userId.isNotEmpty()) {
-            withContext(Dispatchers.IO) {
-                val profile = repository.getUserProfile(userId)
-                userProfile.value = profile
-                isLoading.value = false
+        try {
+            if (userId.isNotEmpty()) {
+                withContext(Dispatchers.IO) {
+                    try {
+                        val profile = repository.getUserProfile(userId)
+                        userProfile.value = profile
+                    } catch (e: Exception) {
+                        android.util.Log.e("EmergencyScreen", "Error loading profile: ${e.message}", e)
+                        userProfile.value = UserProfile.default(userId)
+                    }
+                }
+            } else {
+                userProfile.value = UserProfile.default("")
             }
+        } finally {
+            isLoading.value = false
         }
     }
     

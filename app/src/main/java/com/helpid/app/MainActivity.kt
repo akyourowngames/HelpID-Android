@@ -106,25 +106,44 @@ fun AppNavigation() {
 
     when (currentScreen.value) {
         "emergency" -> {
-            EmergencyScreen(
-                userId = userId.value,
-                onShowQRClick = { currentScreen.value = "qr" },
-                onEditClick = { currentScreen.value = "edit" },
-                onLanguageClick = { currentScreen.value = "language" }
-            )
+            if (userId.value.isNotEmpty()) {
+                EmergencyScreen(
+                    userId = userId.value,
+                    onShowQRClick = { currentScreen.value = "qr" },
+                    onEditClick = { currentScreen.value = "edit" },
+                    onLanguageClick = { currentScreen.value = "language" }
+                )
+            } else {
+                // Still loading
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFFAFAFA)),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(color = Color(0xFFD32F2F))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Loading profile...", fontSize = 14.sp, color = Color(0xFF999999))
+                }
+            }
         }
         "qr" -> {
-            QRScreen(
-                userId = userId.value,
-                onBackClick = { currentScreen.value = "emergency" }
-            )
+            if (userId.value.isNotEmpty()) {
+                QRScreen(
+                    userId = userId.value,
+                    onBackClick = { currentScreen.value = "emergency" }
+                )
+            }
         }
         "edit" -> {
-            EditProfileScreen(
-                userId = userId.value,
-                onBackClick = { currentScreen.value = "emergency" },
-                onSaveSuccess = { currentScreen.value = "emergency" }
-            )
+            if (userId.value.isNotEmpty()) {
+                EditProfileScreen(
+                    userId = userId.value,
+                    onBackClick = { currentScreen.value = "emergency" },
+                    onSaveSuccess = { currentScreen.value = "emergency" }
+                )
+            }
         }
         "language" -> {
             LanguageSelectionScreen(
