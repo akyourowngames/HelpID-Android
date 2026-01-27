@@ -2,6 +2,8 @@ package com.helpid.app.ui
 
 import android.content.Intent
 import android.net.Uri
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -350,6 +352,162 @@ fun EmergencyScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // Allergies Card
+        if (profile.allergies.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.allergies),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF999999),
+                        letterSpacing = 0.3.sp
+                    )
+                    
+                    profile.allergies.forEach { allergy ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFFAFAFA), shape = RoundedCornerShape(8.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = allergy.allergen,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFFD32F2F)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = stringResource(R.string.severity) + " " + allergy.severity,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF666666)
+                                )
+                                if (allergy.reaction.isNotEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.reaction) + " " + allergy.reaction,
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF666666)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.no_allergies),
+                    fontSize = 12.sp,
+                    color = Color(0xFF999999),
+                    modifier = Modifier.padding(16.dp),
+                    fontWeight = FontWeight.Light
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Medications Card
+        if (profile.medications.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.medications),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF999999),
+                        letterSpacing = 0.3.sp
+                    )
+                    
+                    profile.medications.forEach { med ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFFAFAFA), shape = RoundedCornerShape(8.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = med.name,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF1A1A1A)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = stringResource(R.string.dosage) + " " + med.dosage,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF666666)
+                                )
+                                Text(
+                                    text = stringResource(R.string.frequency) + " " + med.frequency,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF666666)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.no_medications),
+                    fontSize = 12.sp,
+                    color = Color(0xFF999999),
+                    modifier = Modifier.padding(16.dp),
+                    fontWeight = FontWeight.Light
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         // Action Buttons
         Column(
             modifier = Modifier
@@ -358,6 +516,46 @@ fun EmergencyScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // SOS Button - Large Red Button
+            val isSending = remember { mutableStateOf(false) }
+            
+            Button(
+                onClick = {
+                    isSending.value = true
+                    // Trigger haptic feedback
+                    val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
+                    vibrator?.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+                    
+                    // Simulate sending SOS - in production, this would send to emergency contacts
+                    // For now, just trigger emergency call
+                    val intent = Intent(Intent.ACTION_CALL).apply {
+                        data = Uri.parse("tel:112")
+                    }
+                    try {
+                        context.startActivity(intent)
+                        isSending.value = false
+                    } catch (e: Exception) {
+                        isSending.value = false
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(70.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFD32F2F)
+                )
+            ) {
+                Text(
+                    text = if (isSending.value) stringResource(R.string.sos_sending) else stringResource(R.string.sos_button),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    letterSpacing = 1.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Primary: Emergency Call
             Button(
                 onClick = {

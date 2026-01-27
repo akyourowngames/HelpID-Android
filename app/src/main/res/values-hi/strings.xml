@@ -13,6 +13,17 @@
     <string name="call_emergency">आपातकाल को कॉल करें • 112</string>
     <string name="show_qr_code">QR कोड दिखाएं</string>
     <string name="edit">संपादित करें</string>
+    <string name="sos_button">SOS</string>
+    <string name="sos_sending">आपातकालीन सतर्कता भेज रहे हैं...</string>
+    <string name="sos_sent">आपातकालीन सतर्कता भेजी गई!</string>
+    <string name="allergies">एलर्जी</string>
+    <string name="medications">दवाएं</string>
+    <string name="severity">गंभीरता: %s</string>
+    <string name="reaction">प्रतिक्रिया: %s</string>
+    <string name="dosage">खुराक: %s</string>
+    <string name="frequency">आवृत्ति: %s</string>
+    <string name="no_allergies">कोई एलर्जी दर्ज नहीं</string>
+    <string name="no_medications">कोई दवा दर्ज नहीं</string>
     
     <!-- Edit Profile Screen -->
     <string name="edit_profile">प्रोफ़ाइल संपादित करें</string>

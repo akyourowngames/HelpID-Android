@@ -13,6 +13,17 @@
     <string name="call_emergency">NOTFALL ANRUFEN • 112</string>
     <string name="show_qr_code">QR-Code anzeigen</string>
     <string name="edit">Bearbeiten</string>
+    <string name="sos_button">SOS</string>
+    <string name="sos_sending">Notfallwarnung wird gesendet...</string>
+    <string name="sos_sent">Notfallwarnung gesendet!</string>
+    <string name="allergies">Allergien</string>
+    <string name="medications">Medikamente</string>
+    <string name="severity">Schweregrad: %s</string>
+    <string name="reaction">Reaktion: %s</string>
+    <string name="dosage">Dosierung: %s</string>
+    <string name="frequency">Häufigkeit: %s</string>
+    <string name="no_allergies">Keine Allergien registriert</string>
+    <string name="no_medications">Keine Medikamente registriert</string>
     
     <!-- Edit Profile Screen -->
     <string name="edit_profile">Profil bearbeiten</string>

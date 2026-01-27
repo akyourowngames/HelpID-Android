@@ -13,6 +13,17 @@
     <string name="call_emergency">CALL EMERGENCY • 112</string>
     <string name="show_qr_code">Show QR Code</string>
     <string name="edit">Edit</string>
+    <string name="sos_button">SOS</string>
+    <string name="sos_sending">Sending Emergency Alert...</string>
+    <string name="sos_sent">Emergency Alert Sent!</string>
+    <string name="allergies">Allergies</string>
+    <string name="medications">Medications</string>
+    <string name="severity">Severity: %s</string>
+    <string name="reaction">Reaction: %s</string>
+    <string name="dosage">Dosage: %s</string>
+    <string name="frequency">Frequency: %s</string>
+    <string name="no_allergies">No allergies recorded</string>
+    <string name="no_medications">No medications recorded</string>
     
     <!-- Edit Profile Screen -->
     <string name="edit_profile">Edit Profile</string>
