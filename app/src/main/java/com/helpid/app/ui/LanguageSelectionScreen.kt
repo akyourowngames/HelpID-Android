@@ -61,9 +61,9 @@ fun LanguageSelectionScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {stringResource(R.string.select_language)
+        ) {
             Text(
-                text = "Select Language",
+                text = stringResource(R.string.select_language),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Light,
                 color = Color.White,
@@ -72,7 +72,7 @@ fun LanguageSelectionScreen(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Choose your preferred language",
+                text = stringResource(R.string.choose_language_helper),
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
@@ -133,7 +133,7 @@ fun LanguageSelectionScreen(
                 )
             ) {
                 Text(
-                    text = "APPLY",
+                    text = stringResource(R.string.apply),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
                     letterSpacing = 0.5.sp
@@ -150,9 +150,9 @@ fun LanguageSelectionScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent
                 )
-            ) {stringResource(R.string.back)
+            ) {
                 Text(
-                    text = "Back",
+                    text = stringResource(R.string.back),
                     fontWeight = FontWeight.Light,
                     fontSize = 12.sp,
                     color = Color(0xFF999999)

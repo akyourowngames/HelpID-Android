@@ -16,6 +16,7 @@
     <string name="sos_button">SOS</string>
     <string name="sos_sending">Sending Emergency Alert...</string>
     <string name="sos_sent">Emergency Alert Sent!</string>
+    <string name="loading">Loading...</string>
     <string name="allergies">Allergies</string>
     <string name="medications">Medications</string>
     <string name="severity">Severity: %s</string>
@@ -24,6 +25,7 @@
     <string name="frequency">Frequency: %s</string>
     <string name="no_allergies">No allergies recorded</string>
     <string name="no_medications">No medications recorded</string>
+    <string name="no_emergency_contacts">No emergency contacts added yet</string>
     
     <!-- Edit Profile Screen -->
     <string name="edit_profile">Edit Profile</string>
@@ -33,6 +35,13 @@
     <string name="name">Name</string>
     <string name="phone">Phone</string>
     <string name="one_per_line">One per line</string>
+    <string name="section_personal_info">Personal Information</string>
+    <string name="section_medical_info">Medical Information</string>
+    <string name="section_contacts">Emergency Contacts</string>
+    <string name="allergy_format_hint">Allergen | Severity | Reaction</string>
+    <string name="allergy_helper_text">Use one allergy per line</string>
+    <string name="medication_format_hint">Name | Dosage | Frequency</string>
+    <string name="medication_helper_text">Use one medication per line</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     
@@ -40,6 +49,7 @@
     <string name="emergency_access">Emergency Access</string>
     <string name="scan_to_view">Scan to view emergency information</string>
     <string name="scan_this_code">Scan this code to access emergency information</string>
+    <string name="share_qr_code">Share QR Code</string>
     <string name="back">BACK</string>
     
     <!-- Share & Export -->
@@ -52,6 +62,8 @@
     
     <!-- Language Selection -->
     <string name="select_language">Select Language</string>
+    <string name="choose_language_helper">Choose your preferred language</string>
+    <string name="apply">APPLY</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>
     <string name="language_hindi">हिंदी</string>

@@ -158,9 +158,27 @@ fun EditProfileScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    Text(
+                        text = stringResource(R.string.section_personal_info),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1A1A1A),
+                        letterSpacing = 0.2.sp
+                    )
+
                     // Name Field
                     FormField(stringResource(R.string.full_name), name.value) { name.value = it }
                     FormField(stringResource(R.string.blood_group), bloodGroup.value) { bloodGroup.value = it }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = stringResource(R.string.section_medical_info),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1A1A1A),
+                        letterSpacing = 0.2.sp
+                    )
 
                     // Medical Notes
                     Text(
@@ -202,7 +220,7 @@ fun EditProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp),
-                        placeholder = { Text("Allergen|Severity|Reaction") },
+                        placeholder = { Text(stringResource(R.string.allergy_format_hint)) },
                         colors = TextFieldDefaults.colors(
                             unfocusedContainerColor = Color(0xFFF5F5F5),
                             focusedContainerColor = Color.White,
@@ -210,6 +228,11 @@ fun EditProfileScreen(
                             focusedIndicatorColor = Color(0xFFD32F2F)
                         ),
                         shape = RoundedCornerShape(8.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.allergy_helper_text),
+                        fontSize = 11.sp,
+                        color = Color(0xFF999999)
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -228,7 +251,7 @@ fun EditProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp),
-                        placeholder = { Text("Name|Dosage|Frequency") },
+                        placeholder = { Text(stringResource(R.string.medication_format_hint)) },
                         colors = TextFieldDefaults.colors(
                             unfocusedContainerColor = Color(0xFFF5F5F5),
                             focusedContainerColor = Color.White,
@@ -237,8 +260,21 @@ fun EditProfileScreen(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     )
+                    Text(
+                        text = stringResource(R.string.medication_helper_text),
+                        fontSize = 11.sp,
+                        color = Color(0xFF999999)
+                    )
 
                     Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = stringResource(R.string.section_contacts),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1A1A1A),
+                        letterSpacing = 0.2.sp
+                    )
 
                     // Emergency Contacts
                     Text(

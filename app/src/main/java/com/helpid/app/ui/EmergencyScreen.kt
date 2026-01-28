@@ -2,6 +2,7 @@ package com.helpid.app.ui
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -122,7 +124,9 @@ fun EmergencyScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Loading...", fontSize = 14.sp, color = Color(0xFF999999))
+            CircularProgressIndicator(color = Color(0xFFD32F2F), strokeWidth = 2.dp)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(stringResource(R.string.loading), fontSize = 14.sp, color = Color(0xFF999999))
         }
         return
     }
@@ -153,7 +157,7 @@ fun EmergencyScreen(
     val lastUpdatedText = remember(profile.lastUpdated) {
         val date = Date(profile.lastUpdated)
         val sdf = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
-        "Updated: ${sdf.format(date)}"
+        context.getString(R.string.updated, sdf.format(date))
     }
 
     Column(
@@ -338,56 +342,65 @@ fun EmergencyScreen(
                     letterSpacing = 0.3.sp
                 )
 
-                emergencyContacts.forEach { contact ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                Color(0xFFFAFAFA),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                val intent = Intent(Intent.ACTION_CALL).apply {
-                                    data = Uri.parse("tel:${contact.phoneNumber.replace(" ", "")}")
-                                }
-                                try {
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    // Handle case where call permission is not granted
-                                }
-                            }
-                            .padding(12.dp)
-                    ) {
-                        Row(
+                if (emergencyContacts.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.no_emergency_contacts),
+                        fontSize = 12.sp,
+                        color = Color(0xFF999999),
+                        fontWeight = FontWeight.Light
+                    )
+                } else {
+                    emergencyContacts.forEach { contact ->
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = contact.name,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF1A1A1A)
+                                .background(
+                                    Color(0xFFFAFAFA),
+                                    shape = RoundedCornerShape(8.dp)
                                 )
-                                Spacer(modifier = Modifier.height(3.dp))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    val intent = Intent(Intent.ACTION_CALL).apply {
+                                        data = Uri.parse("tel:${contact.phoneNumber.replace(" ", "")}")
+                                    }
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        // Handle case where call permission is not granted
+                                    }
+                                }
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = contact.name,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF1A1A1A)
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = contact.phoneNumber,
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF666666),
+                                        fontWeight = FontWeight.Light
+                                    )
+                                }
                                 Text(
-                                    text = contact.phoneNumber,
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF666666),
-                                    fontWeight = FontWeight.Light
+                                    text = "☎",
+                                    fontSize = 18.sp,
+                                    color = Color(0xFFD32F2F)
                                 )
                             }
-                            Text(
-                                text = "☎",
-                                fontSize = 18.sp,
-                                color = Color(0xFFD32F2F)
-                            )
                         }
                     }
                 }
@@ -437,13 +450,13 @@ fun EmergencyScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = stringResource(R.string.severity) + " " + allergy.severity,
+                                    text = stringResource(R.string.severity, allergy.severity),
                                     fontSize = 12.sp,
                                     color = Color(0xFF666666)
                                 )
                                 if (allergy.reaction.isNotEmpty()) {
                                     Text(
-                                        text = stringResource(R.string.reaction) + " " + allergy.reaction,
+                                        text = stringResource(R.string.reaction, allergy.reaction),
                                         fontSize = 12.sp,
                                         color = Color(0xFF666666)
                                     )
@@ -516,12 +529,12 @@ fun EmergencyScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = stringResource(R.string.dosage) + " " + med.dosage,
+                                    text = stringResource(R.string.dosage, med.dosage),
                                     fontSize = 12.sp,
                                     color = Color(0xFF666666)
                                 )
                                 Text(
-                                    text = stringResource(R.string.frequency) + " " + med.frequency,
+                                    text = stringResource(R.string.frequency, med.frequency),
                                     fontSize = 12.sp,
                                     color = Color(0xFF666666)
                                 )
@@ -566,7 +579,16 @@ fun EmergencyScreen(
                     isSending.value = true
                     // Trigger haptic feedback
                     val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
-                    vibrator?.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+                    if (vibrator != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            vibrator.vibrate(
+                                VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+                            )
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator.vibrate(500)
+                        }
+                    }
                     
                     // Simulate sending SOS - in production, this would send to emergency contacts
                     // For now, just trigger emergency call

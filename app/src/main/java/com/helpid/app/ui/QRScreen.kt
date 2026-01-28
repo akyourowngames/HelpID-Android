@@ -1,9 +1,11 @@
 package com.helpid.app.ui
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,7 +33,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.draw.shadow
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
@@ -57,6 +59,7 @@ fun QRScreen(
     userId: String,
     onBackClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val qrContent = "https://helpid.app/e/$userId"
     val qrBitmap = generateQRCode(qrContent, 512)
 
@@ -129,7 +132,33 @@ fun QRScreen(
                 .padding(horizontal = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Button(
+            onClick = {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, qrContent)
+                }
+                context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_qr_code)))
+            },
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(48.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ComposeColor(0xFFF5F5F5)
+            )
+        ) {
+            Text(
+                text = stringResource(R.string.share_qr_code),
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                color = ComposeColor(0xFF1A1A1A)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
 
         // Back Button
         Button(

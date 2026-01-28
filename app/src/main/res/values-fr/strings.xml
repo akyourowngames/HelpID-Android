@@ -3,19 +3,20 @@
     <string name="app_name">HelpID</string>
     
     <!-- Emergency Screen -->
-    <string name="emergency_id">Identifiant d\'Urgence</string>
-    <string name="for_medical_emergencies">À utiliser en cas d\'urgence médicale</string>
+    <string name="emergency_id">Identifiant d’urgence</string>
+    <string name="for_medical_emergencies">À utiliser en cas d’urgence médicale</string>
     <string name="full_name">Nom Complet</string>
     <string name="blood_group">Groupe Sanguin</string>
     <string name="medical_conditions">Conditions Médicales</string>
     <string name="updated">Mis à jour: %s</string>
-    <string name="emergency_contacts">Contacts d\'Urgence</string>
+    <string name="emergency_contacts">Contacts d’urgence</string>
     <string name="call_emergency">APPELER URGENCE • 112</string>
     <string name="show_qr_code">Afficher le Code QR</string>
     <string name="edit">Modifier</string>
     <string name="sos_button">SOS</string>
-    <string name="sos_sending">Envoi de l\'alerte d\'urgence...</string>
-    <string name="sos_sent">Alerte d\'urgence envoyée!</string>
+    <string name="sos_sending">Envoi de l’alerte d’urgence...</string>
+    <string name="sos_sent">Alerte d’urgence envoyée!</string>
+    <string name="loading">Chargement...</string>
     <string name="allergies">Allergies</string>
     <string name="medications">Médicaments</string>
     <string name="severity">Gravité: %s</string>
@@ -24,27 +25,36 @@
     <string name="frequency">Fréquence: %s</string>
     <string name="no_allergies">Aucune allergie enregistrée</string>
     <string name="no_medications">Aucun médicament enregistré</string>
+    <string name="no_emergency_contacts">Aucun contact d’urgence ajouté</string>
     
     <!-- Edit Profile Screen -->
     <string name="edit_profile">Modifier le Profil</string>
-    <string name="update_emergency_information">Mettez à jour vos informations d\'urgence</string>
-    <string name="emergency_contact_1">Contact d\'Urgence 1</string>
-    <string name="emergency_contact_2">Contact d\'Urgence 2</string>
+    <string name="update_emergency_information">Mettez à jour vos informations d’urgence</string>
+    <string name="emergency_contact_1">Contact d’urgence 1</string>
+    <string name="emergency_contact_2">Contact d’urgence 2</string>
     <string name="name">Nom</string>
     <string name="phone">Téléphone</string>
     <string name="one_per_line">Un par ligne</string>
+    <string name="section_personal_info">Informations Personnelles</string>
+    <string name="section_medical_info">Informations Médicales</string>
+    <string name="section_contacts">Contacts d’urgence</string>
+    <string name="allergy_format_hint">Allergène | Gravité | Réaction</string>
+    <string name="allergy_helper_text">Une allergie par ligne</string>
+    <string name="medication_format_hint">Nom | Posologie | Fréquence</string>
+    <string name="medication_helper_text">Un médicament par ligne</string>
     <string name="save">Enregistrer</string>
     <string name="cancel">Annuler</string>
     
     <!-- QR Screen -->
-    <string name="emergency_access">Accès d\'Urgence</string>
-    <string name="scan_to_view">Scannez pour afficher les informations d\'urgence</string>
-    <string name="scan_this_code">Scannez ce code pour accéder à vos informations d\'urgence</string>
+    <string name="emergency_access">Accès d’urgence</string>
+    <string name="scan_to_view">Scannez pour afficher les informations d’urgence</string>
+    <string name="scan_this_code">Scannez ce code pour accéder à vos informations d’urgence</string>
+    <string name="share_qr_code">Partager le code QR</string>
     <string name="back">RETOUR</string>
     
     <!-- Share & Export -->
     <string name="export_pdf">Exporter en PDF</string>
-    <string name="share_emergency_info">Partager les Informations d\'Urgence</string>
+    <string name="share_emergency_info">Partager les informations d’urgence</string>
     <string name="share_whatsapp">Partager via WhatsApp</string>
     <string name="share_sms">Partager via SMS</string>
     <string name="share_email">Partager via Email</string>
@@ -52,6 +62,8 @@
     
     <!-- Language Selection -->
     <string name="select_language">Sélectionner la Langue</string>
+    <string name="choose_language_helper">Choisissez votre langue préférée</string>
+    <string name="apply">APPLIQUER</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>
     <string name="language_hindi">हिंदी</string>

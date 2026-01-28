@@ -16,6 +16,7 @@
     <string name="sos_button">SOS</string>
     <string name="sos_sending">Notfallwarnung wird gesendet...</string>
     <string name="sos_sent">Notfallwarnung gesendet!</string>
+    <string name="loading">Laden...</string>
     <string name="allergies">Allergien</string>
     <string name="medications">Medikamente</string>
     <string name="severity">Schweregrad: %s</string>
@@ -24,6 +25,7 @@
     <string name="frequency">Häufigkeit: %s</string>
     <string name="no_allergies">Keine Allergien registriert</string>
     <string name="no_medications">Keine Medikamente registriert</string>
+    <string name="no_emergency_contacts">Noch keine Notfallkontakte hinzugefügt</string>
     
     <!-- Edit Profile Screen -->
     <string name="edit_profile">Profil bearbeiten</string>
@@ -33,6 +35,13 @@
     <string name="name">Name</string>
     <string name="phone">Telefon</string>
     <string name="one_per_line">Eins pro Zeile</string>
+    <string name="section_personal_info">Persönliche Informationen</string>
+    <string name="section_medical_info">Medizinische Informationen</string>
+    <string name="section_contacts">Notfallkontakte</string>
+    <string name="allergy_format_hint">Allergen | Schweregrad | Reaktion</string>
+    <string name="allergy_helper_text">Eine Allergie pro Zeile</string>
+    <string name="medication_format_hint">Name | Dosierung | Häufigkeit</string>
+    <string name="medication_helper_text">Ein Medikament pro Zeile</string>
     <string name="save">Speichern</string>
     <string name="cancel">Abbrechen</string>
     
@@ -40,6 +49,7 @@
     <string name="emergency_access">Notfallzugriff</string>
     <string name="scan_to_view">Zum Anzeigen von Notfallinformationen scannen</string>
     <string name="scan_this_code">Scannen Sie diesen Code, um auf Ihre Notfallinformationen zuzugreifen</string>
+    <string name="share_qr_code">QR-Code teilen</string>
     <string name="back">ZURÜCK</string>
     
     <!-- Share & Export -->
@@ -52,6 +62,8 @@
     
     <!-- Language Selection -->
     <string name="select_language">Sprache Wählen</string>
+    <string name="choose_language_helper">Bevorzugte Sprache wählen</string>
+    <string name="apply">ANWENDEN</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>
     <string name="language_hindi">हिंदी</string>
