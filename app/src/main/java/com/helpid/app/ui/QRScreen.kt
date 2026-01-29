@@ -1,8 +1,11 @@
 package com.helpid.app.ui
 
-import android.content.Intent
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.nfc.NdefMessage
+import android.nfc.NdefRecord
+import android.nfc.NfcAdapter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,12 +21,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -66,8 +72,42 @@ fun QRScreen(
     onBackClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val activity = context as? Activity
+    val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
+    val isNfcActive = remember { mutableStateOf(false) }
     val qrContent = "https://helpid.app/e/$userId"
     val qrBitmap = remember { mutableStateOf<Bitmap?>(null) }
+
+    fun setBeamMessage(message: NdefMessage?) {
+        if (nfcAdapter == null || activity == null) return
+        try {
+            val method = NfcAdapter::class.java.getMethod(
+                "setNdefPushMessage",
+                NdefMessage::class.java,
+                Activity::class.java
+            )
+            method.invoke(nfcAdapter, message, activity)
+        } catch (_: Exception) {
+        }
+    }
+
+    DisposableEffect(isNfcActive.value, userId) {
+        if (nfcAdapter == null || activity == null || userId.isEmpty()) {
+            onDispose { }
+        } else {
+            if (isNfcActive.value) {
+                val message = NdefMessage(
+                    arrayOf(NdefRecord.createUri(qrContent))
+                )
+                setBeamMessage(message)
+            } else {
+                setBeamMessage(null)
+            }
+            onDispose {
+                setBeamMessage(null)
+            }
+        }
+    }
 
     LaunchedEffect(qrContent) {
         qrBitmap.value = withContext(Dispatchers.Default) {
@@ -90,6 +130,62 @@ fun QRScreen(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        // NFC Tap-to-Assist Section
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp))
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Tap-to-Assist (NFC)",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Tap phones together to open this profile.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                if (nfcAdapter != null) {
+                    Button(
+                        onClick = { isNfcActive.value = !isNfcActive.value },
+                        modifier = Modifier
+                            .height(38.dp)
+                            .fillMaxWidth(0.7f),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isNfcActive.value) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                            contentColor = if (isNfcActive.value) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Text(
+                            text = if (isNfcActive.value) "NFC ACTIVE" else "ENABLE NFC",
+                            fontSize = 11.sp,
+                            letterSpacing = 0.6.sp
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "NFC unavailable on this device",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         // QR Code Container
         Box(

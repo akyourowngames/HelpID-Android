@@ -1,8 +1,12 @@
 package com.helpid.app.ui
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.content.Intent
+import android.nfc.NdefMessage
+import android.nfc.NdefRecord
+import android.nfc.NfcAdapter
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -99,6 +103,9 @@ fun EmergencyScreen(
     val repository = remember { FirebaseRepository(context) }
     val clipboardManager = LocalClipboardManager.current
     val notificationHelper = remember { NotificationHelper(context) }
+    val activity = context as? Activity
+    val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
+    val isNfcActive = remember { mutableStateOf(false) }
     
     val userProfile = remember { mutableStateOf(UserProfile.default(userId)) }
     val isLoading = remember { mutableStateOf(true) }
@@ -113,6 +120,37 @@ fun EmergencyScreen(
         try {
             context.startActivity(intent)
         } catch (_: Exception) {
+        }
+    }
+
+    fun setBeamMessage(message: NdefMessage?) {
+        if (nfcAdapter == null || activity == null) return
+        try {
+            val method = NfcAdapter::class.java.getMethod(
+                "setNdefPushMessage",
+                NdefMessage::class.java,
+                Activity::class.java
+            )
+            method.invoke(nfcAdapter, message, activity)
+        } catch (_: Exception) {
+        }
+    }
+
+    DisposableEffect(isNfcActive.value, userId) {
+        if (nfcAdapter == null || activity == null || userId.isEmpty()) {
+            onDispose { }
+        } else {
+            if (isNfcActive.value) {
+                val message = NdefMessage(
+                    arrayOf(NdefRecord.createUri("https://helpid.app/e/$userId"))
+                )
+                setBeamMessage(message)
+            } else {
+                setBeamMessage(null)
+            }
+            onDispose {
+                setBeamMessage(null)
+            }
         }
     }
 
