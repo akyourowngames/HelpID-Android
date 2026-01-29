@@ -225,7 +225,7 @@ fun EmergencyScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Transparent)
+                .background(MaterialTheme.colorScheme.inverseSurface)
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween

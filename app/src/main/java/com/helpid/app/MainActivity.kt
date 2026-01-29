@@ -298,7 +298,7 @@ private fun BottomItem(
         label = "bottomItemColor"
     )
     val targetWidth by animateDpAsState(
-        targetValue = if (isSelected) 112.dp else 48.dp,
+        targetValue = 52.dp,
         label = "bottomItemWidth"
     )
     val bg by animateColorAsState(
@@ -313,15 +313,14 @@ private fun BottomItem(
         Row(
             modifier = Modifier
                 .width(targetWidth)
-                .height(52.dp)
-                .padding(horizontal = 8.dp),
+                .height(52.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             IconButton(
                 onClick = onClick,
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(44.dp)
                     .background(Color.Transparent, CircleShape)
             ) {
                 Icon(
@@ -329,16 +328,6 @@ private fun BottomItem(
                     contentDescription = label,
                     tint = targetColor
                 )
-            }
-            if (isSelected) {
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = label,
-                    color = targetColor,
-                    fontSize = 12.sp,
-                    letterSpacing = 0.3.sp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
             }
         }
     }
