@@ -49,10 +49,8 @@ import android.provider.ContactsContract
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.NumberParseException
 import com.helpid.app.R
-import com.helpid.app.data.AllergyData
 import com.helpid.app.data.EmergencyContactData
 import com.helpid.app.data.FirebaseRepository
-import com.helpid.app.data.MedicationData
 import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
 import kotlinx.coroutines.Dispatchers
@@ -83,8 +81,6 @@ fun EditProfileScreen(
     val name = remember { mutableStateOf("") }
     val bloodGroup = remember { mutableStateOf("") }
     val medicalNotes = remember { mutableStateOf("") }
-    val allergiesText = remember { mutableStateOf("") } // Format: "allergen|severity|reaction\n..."
-    val medicationsText = remember { mutableStateOf("") } // Format: "name|dosage|frequency\n..."
     val emergencyContacts = remember { mutableStateListOf<EmergencyContactData>() }
 
     fun ensureMinContacts() {
@@ -206,16 +202,6 @@ fun EditProfileScreen(
             bloodGroup.value = loadedProfile.bloodGroup
             medicalNotes.value = loadedProfile.medicalNotes.joinToString("\n")
             
-            // Populate allergies
-            allergiesText.value = loadedProfile.allergies.joinToString("\n") { allergy ->
-                "${allergy.allergen}|${allergy.severity}|${allergy.reaction}"
-            }
-            
-            // Populate medications
-            medicationsText.value = loadedProfile.medications.joinToString("\n") { med ->
-                "${med.name}|${med.dosage}|${med.frequency}"
-            }
-
             emergencyContacts.clear()
             emergencyContacts.addAll(loadedProfile.emergencyContacts)
             ensureMinContacts()
@@ -321,70 +307,6 @@ fun EditProfileScreen(
                         shape = RoundedCornerShape(8.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Allergies
-                    Text(
-                        text = stringResource(R.string.allergies),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF999999),
-                        letterSpacing = 0.3.sp
-                    )
-                    TextField(
-                        value = allergiesText.value,
-                        onValueChange = { allergiesText.value = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp),
-                        placeholder = { Text(stringResource(R.string.allergy_format_hint)) },
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = Color(0xFFF5F5F5),
-                            focusedContainerColor = Color.White,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedIndicatorColor = Color(0xFFD32F2F)
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.allergy_helper_text),
-                        fontSize = 11.sp,
-                        color = Color(0xFF999999)
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Medications
-                    Text(
-                        text = stringResource(R.string.medications),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF999999),
-                        letterSpacing = 0.3.sp
-                    )
-                    TextField(
-                        value = medicationsText.value,
-                        onValueChange = { medicationsText.value = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp),
-                        placeholder = { Text(stringResource(R.string.medication_format_hint)) },
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = Color(0xFFF5F5F5),
-                            focusedContainerColor = Color.White,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedIndicatorColor = Color(0xFFD32F2F)
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.medication_helper_text),
-                        fontSize = 11.sp,
-                        color = Color(0xFF999999)
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
                     Text(
                         text = stringResource(R.string.section_contacts),
                         fontSize = 12.sp,
@@ -464,39 +386,11 @@ fun EditProfileScreen(
                     onClick = {
                         isSaving.value = true
                         
-                        // Parse allergies
-                        val allergies = allergiesText.value
-                            .split("\n")
-                            .filter { it.isNotBlank() }
-                            .map { line ->
-                                val parts = line.split("|")
-                                AllergyData(
-                                    allergen = parts.getOrNull(0)?.trim() ?: "",
-                                    severity = parts.getOrNull(1)?.trim() ?: "",
-                                    reaction = parts.getOrNull(2)?.trim() ?: ""
-                                )
-                            }
-                        
-                        // Parse medications
-                        val medications = medicationsText.value
-                            .split("\n")
-                            .filter { it.isNotBlank() }
-                            .map { line ->
-                                val parts = line.split("|")
-                                MedicationData(
-                                    name = parts.getOrNull(0)?.trim() ?: "",
-                                    dosage = parts.getOrNull(1)?.trim() ?: "",
-                                    frequency = parts.getOrNull(2)?.trim() ?: ""
-                                )
-                            }
-                        
                         val updatedProfile = UserProfile(
                             userId = userId,
                             name = name.value,
                             bloodGroup = bloodGroup.value,
                             medicalNotes = medicalNotes.value.split("\n").filter { it.isNotBlank() },
-                            allergies = allergies,
-                            medications = medications,
                             emergencyContacts = emergencyContacts
                                 .filter { it.name.isNotBlank() && it.phone.isNotBlank() },
                             language = "en"

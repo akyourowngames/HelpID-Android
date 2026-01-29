@@ -97,26 +97,6 @@ object ShareUtils {
         sb.append("Blood Group: ${profile.bloodGroup}\n")
         sb.append("Emergency ID: ${profile.userId}\n\n")
         
-        if (profile.allergies.isNotEmpty()) {
-            sb.append("⚠️ ALLERGIES:\n")
-            profile.allergies.forEach { allergy ->
-                sb.append("• ${allergy.allergen} (${allergy.severity})")
-                if (allergy.reaction.isNotEmpty()) {
-                    sb.append(" - Reaction: ${allergy.reaction}")
-                }
-                sb.append("\n")
-            }
-            sb.append("\n")
-        }
-        
-        if (profile.medications.isNotEmpty()) {
-            sb.append("💊 MEDICATIONS:\n")
-            profile.medications.forEach { med ->
-                sb.append("• ${med.name}: ${med.dosage} (${med.frequency})\n")
-            }
-            sb.append("\n")
-        }
-        
         if (profile.medicalNotes.isNotEmpty()) {
             sb.append("📋 CONDITIONS:\n")
             profile.medicalNotes.forEach { note ->

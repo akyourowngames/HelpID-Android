@@ -17,14 +17,6 @@
     <string name="sos_sending">आपातकालीन सतर्कता भेज रहे हैं...</string>
     <string name="sos_sent">आपातकालीन सतर्कता भेजी गई!</string>
     <string name="loading">लोड हो रहा है...</string>
-    <string name="allergies">एलर्जी</string>
-    <string name="medications">दवाएं</string>
-    <string name="severity">गंभीरता: %s</string>
-    <string name="reaction">प्रतिक्रिया: %s</string>
-    <string name="dosage">खुराक: %s</string>
-    <string name="frequency">आवृत्ति: %s</string>
-    <string name="no_allergies">कोई एलर्जी दर्ज नहीं</string>
-    <string name="no_medications">कोई दवा दर्ज नहीं</string>
     <string name="no_emergency_contacts">अभी कोई आपातकालीन संपर्क नहीं है</string>
     
     <!-- Edit Profile Screen -->
@@ -36,12 +28,8 @@
     <string name="phone">फोन</string>
     <string name="one_per_line">एक प्रति पंक्ति</string>
     <string name="section_personal_info">व्यक्तिगत जानकारी</string>
-    <string name="section_medical_info">चिकित्सीय जानकारी</string>
+    <string name="section_medical_info">चिकित्सा जानकारी</string>
     <string name="section_contacts">आपातकालीन संपर्क</string>
-    <string name="allergy_format_hint">एलर्जेन | गंभीरता | प्रतिक्रिया</string>
-    <string name="allergy_helper_text">एक पंक्ति में एक एलर्जी</string>
-    <string name="medication_format_hint">नाम | खुराक | आवृत्ति</string>
-    <string name="medication_helper_text">एक पंक्ति में एक दवा</string>
     <string name="save">सहेजें</string>
     <string name="cancel">रद्द करें</string>
     

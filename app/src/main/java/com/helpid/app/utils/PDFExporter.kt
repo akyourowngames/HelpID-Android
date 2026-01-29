@@ -46,28 +46,6 @@ object PDFExporter {
             
             document.add(Paragraph("\n"))
             
-            // Allergies Section
-            if (profile.allergies.isNotEmpty()) {
-                addSection(document, "ALLERGIES")
-                profile.allergies.forEach { allergy ->
-                    val text = "${allergy.allergen} (${allergy.severity})"
-                    val subText = if (allergy.reaction.isNotEmpty()) "Reaction: ${allergy.reaction}" else ""
-                    addKeyValue(document, text, subText)
-                }
-            }
-            
-            document.add(Paragraph("\n"))
-            
-            // Medications Section
-            if (profile.medications.isNotEmpty()) {
-                addSection(document, "MEDICATIONS")
-                profile.medications.forEach { med ->
-                    addKeyValue(document, med.name, "${med.dosage} - ${med.frequency}")
-                }
-            }
-            
-            document.add(Paragraph("\n"))
-            
             // Medical Conditions Section
             if (profile.medicalNotes.isNotEmpty()) {
                 addSection(document, "MEDICAL CONDITIONS")

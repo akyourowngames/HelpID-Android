@@ -24,8 +24,6 @@ class FirebaseRepository(context: Context? = null) {
             name = local.name,
             bloodGroup = local.bloodGroup,
             medicalNotes = local.medicalNotes,
-            allergies = emptyList(),
-            medications = emptyList(),
             emergencyContacts = local.emergencyContacts.map {
                 EmergencyContactData(name = it.name, phone = it.phone)
             },
@@ -147,24 +145,6 @@ class FirebaseRepository(context: Context? = null) {
                     name = doc.getString("name") ?: "",
                     bloodGroup = doc.getString("bloodGroup") ?: "",
                     medicalNotes = (doc.get("medicalNotes") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
-                    allergies = (doc.get("allergies") as? List<*>)?.mapNotNull { allergy ->
-                        if (allergy is Map<*, *>) {
-                            AllergyData(
-                                allergen = allergy["allergen"] as? String ?: "",
-                                severity = allergy["severity"] as? String ?: "",
-                                reaction = allergy["reaction"] as? String ?: ""
-                            )
-                        } else null
-                    } ?: emptyList(),
-                    medications = (doc.get("medications") as? List<*>)?.mapNotNull { med ->
-                        if (med is Map<*, *>) {
-                            MedicationData(
-                                name = med["name"] as? String ?: "",
-                                dosage = med["dosage"] as? String ?: "",
-                                frequency = med["frequency"] as? String ?: ""
-                            )
-                        } else null
-                    } ?: emptyList(),
                     emergencyContacts = (doc.get("emergencyContacts") as? List<*>)?.mapNotNull { contact ->
                         if (contact is Map<*, *>) {
                             EmergencyContactData(

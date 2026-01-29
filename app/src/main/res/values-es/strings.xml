@@ -17,14 +17,6 @@
     <string name="sos_sending">Enviando Alerta de Emergencia...</string>
     <string name="sos_sent">¡Alerta de Emergencia Enviada!</string>
     <string name="loading">Cargando...</string>
-    <string name="allergies">Alergias</string>
-    <string name="medications">Medicamentos</string>
-    <string name="severity">Severidad: %s</string>
-    <string name="reaction">Reacción: %s</string>
-    <string name="dosage">Dosis: %s</string>
-    <string name="frequency">Frecuencia: %s</string>
-    <string name="no_allergies">Sin alergias registradas</string>
-    <string name="no_medications">Sin medicamentos registrados</string>
     <string name="no_emergency_contacts">Aún no hay contactos de emergencia</string>
     
     <!-- Edit Profile Screen -->
@@ -36,12 +28,8 @@
     <string name="phone">Teléfono</string>
     <string name="one_per_line">Uno por línea</string>
     <string name="section_personal_info">Información Personal</string>
-    <string name="section_medical_info">Información Médica</string>
-    <string name="section_contacts">Contactos de Emergencia</string>
-    <string name="allergy_format_hint">Alérgeno | Severidad | Reacción</string>
-    <string name="allergy_helper_text">Una alergia por línea</string>
-    <string name="medication_format_hint">Nombre | Dosis | Frecuencia</string>
-    <string name="medication_helper_text">Un medicamento por línea</string>
+    <string name="section_medical_info">Información médica</string>
+    <string name="section_contacts">Contactos de emergencia</string>
     <string name="save">Guardar</string>
     <string name="cancel">Cancelar</string>
     
