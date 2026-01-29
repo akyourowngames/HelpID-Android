@@ -3,6 +3,10 @@ package com.helpid.app.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
@@ -27,6 +31,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,14 +49,18 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -93,6 +105,8 @@ fun EmergencyScreen(
     val isLoading = remember { mutableStateOf(true) }
     val loadError = remember { mutableStateOf<String?>(initError) }
     val isSendingSos = remember { mutableStateOf(false) }
+    val isOnline = remember { mutableStateOf(true) }
+    val syncTick = remember { mutableStateOf(0) }
 
     fun launchDial(number: String) {
         val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -141,12 +155,48 @@ fun EmergencyScreen(
             }
         }
     )
+
+    DisposableEffect(Unit) {
+        val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
+        if (connectivityManager != null) {
+            val callback = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    isOnline.value = true
+                    syncTick.value += 1
+                }
+
+                override fun onLost(network: Network) {
+                    isOnline.value = false
+                }
+            }
+            val request = NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build()
+            connectivityManager.registerNetworkCallback(request, callback)
+
+            onDispose {
+                connectivityManager.unregisterNetworkCallback(callback)
+            }
+        } else {
+            onDispose { }
+        }
+    }
     
-    // Load profile from Firebase with timeout
+    // Load profile offline-first: show cached immediately, then sync remote
     LaunchedEffect(userId) {
         android.util.Log.d("EmergencyScreen", "LaunchedEffect started with userId=$userId")
+        var hasCached = false
         try {
             if (userId.isNotEmpty()) {
+                val cachedProfile = withContext(Dispatchers.IO) {
+                    repository.getCachedUserProfile(userId)
+                }
+                if (cachedProfile != null) {
+                    hasCached = true
+                    userProfile.value = cachedProfile
+                    isLoading.value = false
+                }
+
                 withContext(Dispatchers.IO) {
                     try {
                         android.util.Log.d("EmergencyScreen", "Fetching profile from Firebase")
@@ -159,7 +209,9 @@ fun EmergencyScreen(
                     } catch (e: Exception) {
                         android.util.Log.e("EmergencyScreen", "Error loading profile: ${e.message}", e)
                         loadError.value = "Profile load error: ${e.message}"
-                        userProfile.value = UserProfile.default(userId)
+                        if (!hasCached) {
+                            userProfile.value = UserProfile.default(userId)
+                        }
                     }
                 }
             } else {
@@ -170,8 +222,24 @@ fun EmergencyScreen(
             android.util.Log.e("EmergencyScreen", "Exception in LaunchedEffect: ${e.message}", e)
             loadError.value = e.message
         } finally {
-            isLoading.value = false
-            android.util.Log.d("EmergencyScreen", "LaunchedEffect finished, isLoading=false")
+            if (!hasCached) {
+                isLoading.value = false
+            }
+            android.util.Log.d("EmergencyScreen", "LaunchedEffect finished, isLoading=${isLoading.value}")
+        }
+    }
+
+    LaunchedEffect(syncTick.value, userId) {
+        if (!isOnline.value || userId.isEmpty()) return@LaunchedEffect
+        withContext(Dispatchers.IO) {
+            try {
+                withTimeout(5000L) {
+                    val profile = repository.getUserProfile(userId)
+                    userProfile.value = profile
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("EmergencyScreen", "Background sync failed: ${e.message}", e)
+            }
         }
     }
     
@@ -247,6 +315,22 @@ fun EmergencyScreen(
                     textAlign = TextAlign.Center,
                     letterSpacing = 0.3.sp
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .background(
+                            if (isOnline.value) Color.White.copy(alpha = 0.16f) else Color(0xFFEF5350).copy(alpha = 0.2f),
+                            RoundedCornerShape(20.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = if (isOnline.value) "Online sync" else "Offline mode",
+                        fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        letterSpacing = 0.3.sp
+                    )
+                }
             }
 
             IconButton(
@@ -269,17 +353,27 @@ fun EmergencyScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
-                .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
-            shape = RoundedCornerShape(8.dp),
+                .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            border = BorderStroke(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f)
+                    )
+                )
+            )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .animateContentSize(),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // Name + Blood Group Badge
@@ -320,34 +414,86 @@ fun EmergencyScreen(
                 }
 
                 // Medical Conditions
-                Column {
-                    Text(
-                        text = stringResource(R.string.medical_conditions),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 0.3.sp
-                    )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.medical_conditions),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            letterSpacing = 0.4.sp
+                        )
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
+                                        )
+                                    ),
+                                    RoundedCornerShape(20.dp)
+                                )
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "INFO",
+                                fontSize = 9.sp,
+                                letterSpacing = 1.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
                     Column(
-                        modifier = Modifier.padding(top = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        modifier = Modifier.padding(top = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         medicalNotes.forEach { note ->
+                            val isPressed = remember { mutableStateOf(false) }
+                            val dotSize by animateDpAsState(
+                                targetValue = if (isPressed.value) 7.dp else 5.dp,
+                                label = "medicalDot"
+                            )
+                            val dotColor by animateColorAsState(
+                                targetValue = if (isPressed.value) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                label = "medicalDotColor"
+                            )
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .graphicsLayer(alpha = if (isPressed.value) 0.9f else 1f)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        isPressed.value = !isPressed.value
+                                    }
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(4.dp)
-                                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp))
+                                        .size(dotSize)
+                                        .background(dotColor, RoundedCornerShape(3.dp))
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = note,
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    lineHeight = 16.sp
+                                    lineHeight = 18.sp
                                 )
                             }
                         }

@@ -15,8 +15,10 @@ class FirebaseRepository(context: Context? = null) {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
     private val localDb = context?.let { AppDatabase.getDatabase(it) }
+    private val sharedPrefs = context?.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
     private var demoMode = false
     private var currentUserId = ""
+    private val lastUserIdKey = "last_user_id"
 
     private fun mapLocalToDomain(local: LocalUserProfile): UserProfile {
         return UserProfile(
@@ -59,6 +61,10 @@ class FirebaseRepository(context: Context? = null) {
             val userId = auth.currentUser?.uid ?: ""
             currentUserId = userId
             Log.d("FirebaseRepository", "User ID: $userId")
+
+            if (userId.isNotEmpty()) {
+                sharedPrefs?.edit()?.putString(lastUserIdKey, userId)?.apply()
+            }
             
             if (userId.isEmpty()) {
                 Log.w("FirebaseRepository", "Failed to get user ID, using demo mode")
@@ -85,6 +91,12 @@ class FirebaseRepository(context: Context? = null) {
             userId
         } catch (e: Exception) {
             Log.e("FirebaseRepository", "Auth error: ${e.message}", e)
+            val cachedUserId = sharedPrefs?.getString(lastUserIdKey, "").orEmpty()
+            if (cachedUserId.isNotEmpty()) {
+                Log.d("FirebaseRepository", "Using cached userId for offline mode")
+                currentUserId = cachedUserId
+                return cachedUserId
+            }
             // Fallback to demo mode
             demoMode = true
             currentUserId = "demo-${UUID.randomUUID()}"
@@ -92,100 +104,65 @@ class FirebaseRepository(context: Context? = null) {
         }
     }
 
-    suspend fun getUserProfile(userId: String): UserProfile {
-        // 1. Try to fetch from Local DB first (Offline First)
+    suspend fun getCachedUserProfile(userId: String): UserProfile? {
+        if (localDb == null || userId.isEmpty()) return null
+        return try {
+            localDb.userProfileDao().getUserProfile(userId)?.let { mapLocalToDomain(it) }
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Error reading local db: ${e.message}")
+            null
+        }
+    }
+
+    private suspend fun fetchRemoteProfile(userId: String): UserProfile? {
+        if (demoMode) return null
+        Log.d("FirebaseRepository", "Fetching profile from Firebase for user: $userId")
+        val doc = firestore.collection("users").document(userId).get().await()
+        if (!doc.exists()) return null
+
+        val profile = UserProfile(
+            userId = doc.getString("userId") ?: userId,
+            name = doc.getString("name") ?: "",
+            bloodGroup = doc.getString("bloodGroup") ?: "",
+            medicalNotes = (doc.get("medicalNotes") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+            emergencyContacts = (doc.get("emergencyContacts") as? List<*>)?.mapNotNull { contact ->
+                if (contact is Map<*, *>) {
+                    EmergencyContactData(
+                        name = contact["name"] as? String ?: "",
+                        phone = contact["phone"] as? String ?: ""
+                    )
+                } else null
+            } ?: emptyList(),
+            language = doc.getString("language") ?: "en",
+            lastUpdated = doc.getLong("lastUpdated") ?: System.currentTimeMillis()
+        )
+
         if (localDb != null) {
             try {
-                val localProfile = localDb.userProfileDao().getUserProfile(userId)
-                if (localProfile != null) {
-                    Log.d("FirebaseRepository", "Found local profile for user: $userId")
-                    // If we have internet, we can check for updates in background or just return local
-                    // simpler strategy: return local immediately if exists, but also try to fetch fresh from Firebase to update local
-                    // For now, let's just use local as cache.
-                    // Ideally, we check timestamp.
-                }
+                localDb.userProfileDao().insertUserProfile(mapDomainToLocal(profile))
+                Log.d("FirebaseRepository", "Cached profile to local DB")
             } catch (e: Exception) {
-                Log.e("FirebaseRepository", "Error reading local db: ${e.message}")
+                Log.e("FirebaseRepository", "Failed to cache to local DB: ${e.message}")
             }
+        }
+
+        return profile
+    }
+
+    suspend fun getUserProfile(userId: String): UserProfile {
+        // 1. Try local cache first
+        val cachedProfile = getCachedUserProfile(userId)
+        if (cachedProfile != null) {
+            Log.d("FirebaseRepository", "Found local profile for user: $userId")
         }
 
         // 2. Try to fetch from Firebase
         return try {
-            if (demoMode) {
-                 // Try local DB if demo mode is active but we might have cached data? 
-                 // Actually demo mode is fallback only.
-                 // But if we are in demo mode because of Auth error, we might still have local data?
-                 // Let's check local DB one more time if not done.
-                 if (localDb != null) {
-                    val local = localDb.userProfileDao().getUserProfile(userId)
-                    if (local != null) return mapLocalToDomain(local)
-                 }
-
-                Log.d("FirebaseRepository", "Demo mode: returning demo profile")
-                return UserProfile(
-                    userId = userId,
-                    name = "Demo User",
-                    bloodGroup = "O+",
-                    medicalNotes = listOf("Allergic to penicillin", "Diabetic"),
-                    emergencyContacts = listOf(
-                        EmergencyContactData("Mom", "+1234567890"),
-                        EmergencyContactData("Dad", "+0987654321")
-                    ),
-                    language = "en",
-                    lastUpdated = System.currentTimeMillis()
-                )
-            }
-            
-            Log.d("FirebaseRepository", "Fetching profile from Firebase for user: $userId")
-            val doc = firestore.collection("users").document(userId).get().await()
-            
-            if (doc.exists()) {
-                val profile = UserProfile(
-                    userId = doc.getString("userId") ?: userId,
-                    name = doc.getString("name") ?: "",
-                    bloodGroup = doc.getString("bloodGroup") ?: "",
-                    medicalNotes = (doc.get("medicalNotes") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
-                    emergencyContacts = (doc.get("emergencyContacts") as? List<*>)?.mapNotNull { contact ->
-                        if (contact is Map<*, *>) {
-                            EmergencyContactData(
-                                name = contact["name"] as? String ?: "",
-                                phone = contact["phone"] as? String ?: ""
-                            )
-                        } else null
-                    } ?: emptyList(),
-                    language = doc.getString("language") ?: "en",
-                    lastUpdated = doc.getLong("lastUpdated") ?: System.currentTimeMillis()
-                )
-
-                // Cache to Local DB
-                if (localDb != null) {
-                    try {
-                        localDb.userProfileDao().insertUserProfile(mapDomainToLocal(profile))
-                        Log.d("FirebaseRepository", "Cached profile to local DB")
-                    } catch (e: Exception) {
-                        Log.e("FirebaseRepository", "Failed to cache to local DB: ${e.message}")
-                    }
-                }
-                
-                profile
-            } else {
-                 UserProfile.default(userId)
-            }
+            val remoteProfile = fetchRemoteProfile(userId)
+            remoteProfile ?: cachedProfile ?: UserProfile.default(userId)
         } catch (e: Exception) {
             Log.e("FirebaseRepository", "Error getting profile: ${e.message}", e)
-            // Return demo profile on error
-            UserProfile(
-                userId = userId,
-                name = "Demo User",
-                bloodGroup = "O+",
-                medicalNotes = listOf("Allergic to penicillin", "Diabetic"),
-                emergencyContacts = listOf(
-                    EmergencyContactData("Mom", "+1234567890"),
-                    EmergencyContactData("Dad", "+0987654321")
-                ),
-                language = "en",
-                lastUpdated = System.currentTimeMillis()
-            )
+            cachedProfile ?: UserProfile.default(userId)
         }
     }
 
