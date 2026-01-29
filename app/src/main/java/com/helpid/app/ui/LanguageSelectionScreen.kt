@@ -57,7 +57,8 @@ fun LanguageSelectionScreen(
     ) {
         ScreenHeader(
             title = stringResource(R.string.select_language),
-            subtitle = "Choose your preferred language"
+            subtitle = "Choose your preferred language",
+            onBackClick = onBackClick
         )
 
         Spacer(modifier = Modifier.height(20.dp))

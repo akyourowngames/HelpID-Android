@@ -234,7 +234,8 @@ fun EditProfileScreen(
     ) {
         ScreenHeader(
             title = stringResource(R.string.edit_profile),
-            subtitle = stringResource(R.string.update_emergency_information)
+            subtitle = stringResource(R.string.update_emergency_information),
+            onBackClick = onBackClick
         )
 
         if (isLoading.value) {

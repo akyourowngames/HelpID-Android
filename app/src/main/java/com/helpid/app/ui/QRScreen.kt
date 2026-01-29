@@ -85,7 +85,8 @@ fun QRScreen(
     ) {
         ScreenHeader(
             title = stringResource(R.string.emergency_access),
-            subtitle = stringResource(R.string.scan_to_view)
+            subtitle = stringResource(R.string.scan_to_view),
+            onBackClick = onBackClick
         )
 
         Spacer(modifier = Modifier.height(24.dp))

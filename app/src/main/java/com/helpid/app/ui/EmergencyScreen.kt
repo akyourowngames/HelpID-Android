@@ -40,6 +40,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -180,15 +182,7 @@ fun EmergencyScreen(
     android.util.Log.d("EmergencyScreen", "About to render: isLoading=${isLoading.value}")
     
     if (isLoading.value) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFFAFAFA)),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Loading...", fontSize = 14.sp, color = Color(0xFF999999))
-        }
+        EmergencySkeleton()
         return
     }
 
@@ -260,19 +254,46 @@ fun EmergencyScreen(
                     letterSpacing = 0.3.sp
                 )
             }
-            // Language/Settings Button
-            Button(
-                onClick = onLanguageClick,
-                modifier = Modifier.size(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF333333)
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = "🌐",
-                    fontSize = 20.sp
-                )
+                IconButton(
+                    onClick = onShowQRClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFF333333), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.QrCode,
+                        contentDescription = "Show QR",
+                        tint = Color.White
+                    )
+                }
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFF333333), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Edit,
+                        contentDescription = "Edit Profile",
+                        tint = Color.White
+                    )
+                }
+                IconButton(
+                    onClick = onLanguageClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFF333333), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Language,
+                        contentDescription = "Language",
+                        tint = Color.White
+                    )
+                }
             }
         }
 
@@ -511,24 +532,6 @@ fun EmergencyScreen(
                     }
                 }
             }
-        } else {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.no_allergies),
-                    fontSize = 12.sp,
-                    color = Color(0xFF999999),
-                    modifier = Modifier.padding(16.dp),
-                    fontWeight = FontWeight.Light
-                )
-            }
         }
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -587,24 +590,6 @@ fun EmergencyScreen(
                         }
                     }
                 }
-            }
-        } else {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.no_medications),
-                    fontSize = 12.sp,
-                    color = Color(0xFF999999),
-                    modifier = Modifier.padding(16.dp),
-                    fontWeight = FontWeight.Light
-                )
             }
         }
 

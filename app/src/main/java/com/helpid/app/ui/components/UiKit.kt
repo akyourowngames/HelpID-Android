@@ -13,8 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +32,7 @@ import androidx.compose.ui.unit.sp
 fun ScreenHeader(
     title: String,
     subtitle: String? = null,
+    onBackClick: (() -> Unit)? = null,
     actions: (@Composable RowScope.() -> Unit)? = null
 ) {
     Row(
@@ -38,7 +43,20 @@ fun ScreenHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(verticalArrangement = Arrangement.Center) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (onBackClick != null) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.inverseOnSurface
+                    )
+                }
+            }
+            Column(verticalArrangement = Arrangement.Center) {
             Text(
                 text = title,
                 fontSize = 22.sp,
@@ -54,6 +72,7 @@ fun ScreenHeader(
                     color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.6f),
                     letterSpacing = 0.2.sp
                 )
+            }
             }
         }
 
