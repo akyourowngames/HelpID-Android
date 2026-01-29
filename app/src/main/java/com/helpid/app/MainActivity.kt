@@ -177,7 +177,6 @@ fun AppNavigation() {
                     Log.d(TAG, "Rendering EmergencyScreen")
                     EmergencyScreen(
                         userId = userId.value,
-                        onEditClick = { currentScreen.value = "edit" },
                         onLanguageClick = { currentScreen.value = "language" }
                     )
                 }

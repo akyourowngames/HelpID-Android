@@ -39,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -83,7 +82,6 @@ data class EmergencyContact(
 fun EmergencyScreen(
     userId: String,
     initError: String? = null,
-    onEditClick: () -> Unit = {},
     onLanguageClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -222,16 +220,14 @@ fun EmergencyScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Header with Language Button
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.inverseSurface)
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -252,34 +248,19 @@ fun EmergencyScreen(
                     letterSpacing = 0.3.sp
                 )
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+
+            IconButton(
+                onClick = onLanguageClick,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(40.dp)
+                    .background(Color.Transparent, RoundedCornerShape(10.dp))
             ) {
-                IconButton(
-                    onClick = onEditClick,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.Transparent, RoundedCornerShape(10.dp))
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Edit,
-                        contentDescription = "Edit Profile",
-                        tint = Color.White
-                    )
-                }
-                IconButton(
-                    onClick = onLanguageClick,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.Transparent, RoundedCornerShape(10.dp))
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Language,
-                        contentDescription = "Language",
-                        tint = Color.White
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Outlined.Language,
+                    contentDescription = "Language",
+                    tint = Color.White
+                )
             }
         }
 
@@ -453,126 +434,6 @@ fun EmergencyScreen(
                                 fontSize = 18.sp,
                                 color = Color(0xFFD32F2F)
                             )
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Allergies Card
-        if (profile.allergies.isNotEmpty()) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.allergies),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF999999),
-                        letterSpacing = 0.3.sp
-                    )
-                    
-                    profile.allergies.forEach { allergy ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFFAFAFA), shape = RoundedCornerShape(8.dp))
-                                .padding(12.dp)
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = allergy.allergen,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFFD32F2F)
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = stringResource(R.string.severity, allergy.severity),
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF666666)
-                                )
-                                if (allergy.reaction.isNotEmpty()) {
-                                    Text(
-                                        text = stringResource(R.string.reaction, allergy.reaction),
-                                        fontSize = 12.sp,
-                                        color = Color(0xFF666666)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // Medications Card
-        if (profile.medications.isNotEmpty()) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.medications),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF999999),
-                        letterSpacing = 0.3.sp
-                    )
-                    
-                    profile.medications.forEach { med ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFFAFAFA), shape = RoundedCornerShape(8.dp))
-                                .padding(12.dp)
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = med.name,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF1A1A1A)
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = stringResource(R.string.dosage, med.dosage),
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF666666)
-                                )
-                                Text(
-                                    text = stringResource(R.string.frequency, med.frequency),
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF666666)
-                                )
-                            }
                         }
                     }
                 }
