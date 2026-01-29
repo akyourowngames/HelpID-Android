@@ -73,6 +73,7 @@ import com.helpid.app.R
 import com.helpid.app.data.FirebaseRepository
 import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
+import com.helpid.app.utils.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -97,6 +98,7 @@ fun EmergencyScreen(
     val context = LocalContext.current
     val repository = remember { FirebaseRepository(context) }
     val clipboardManager = LocalClipboardManager.current
+    val notificationHelper = remember { NotificationHelper(context) }
     
     val userProfile = remember { mutableStateOf(UserProfile.default(userId)) }
     val isLoading = remember { mutableStateOf(true) }
@@ -147,11 +149,13 @@ fun EmergencyScreen(
         val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
         if (!hasSms || (!hasFine && !hasCoarse)) {
+            notificationHelper.showSosFailed()
             isSendingSos.value = false
             return
         }
 
         Toast.makeText(context, "SOS triggered", Toast.LENGTH_SHORT).show()
+        notificationHelper.showSosDelivered()
         isSendingSos.value = false
     }
 
@@ -161,8 +165,15 @@ fun EmergencyScreen(
             val sms = result[Manifest.permission.SEND_SMS] == true
             val fine = result[Manifest.permission.ACCESS_FINE_LOCATION] == true
             val coarse = result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            val notifications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                result[Manifest.permission.POST_NOTIFICATIONS] == true
+            } else {
+                true
+            }
             if (sms && (fine || coarse)) {
                 sendSos()
+            } else if (notifications) {
+                notificationHelper.showSosFailed()
             }
         }
     )
@@ -650,13 +661,15 @@ fun EmergencyScreen(
             // SOS Button
             Button(
                 onClick = { 
-                    permissionLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.SEND_SMS,
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        )
+                    val permissions = mutableListOf(
+                        Manifest.permission.SEND_SMS,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
                     )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    permissionLauncher.launch(permissions.toTypedArray())
                 },
                 modifier = Modifier
                     .fillMaxWidth()
