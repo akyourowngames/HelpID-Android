@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.helpid.app.data.FirebaseRepository
@@ -27,6 +28,9 @@ import com.helpid.app.ui.EditProfileScreen
 import com.helpid.app.ui.EmergencyScreen
 import com.helpid.app.ui.LanguageSelectionScreen
 import com.helpid.app.ui.QRScreen
+import com.helpid.app.ui.components.ShimmerPlaceholder
+import com.helpid.app.ui.components.SkeletonSpacer
+import com.helpid.app.ui.components.SkeletonTextLine
 import com.helpid.app.ui.theme.HelpIDTheme
 import com.helpid.app.utils.LanguageManager
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +39,11 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Restore saved language
+        val savedLanguage = LanguageManager.getSelectedLanguage(this)
+        LanguageManager.setLanguage(this, savedLanguage)
+
         setContent {
             HelpIDTheme {
                 Surface(
@@ -49,12 +58,39 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
+private fun InitSkeleton(errorText: String?) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        ShimmerPlaceholder(
+            modifier = Modifier
+                .size(48.dp)
+        )
+        SkeletonSpacer(16.dp)
+        SkeletonTextLine(widthFraction = 0.4f, height = 12.dp)
+        if (errorText != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "Error: $errorText",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
 fun AppNavigation() {
     val currentScreen = remember { mutableStateOf("emergency") }
     val userId = remember { mutableStateOf("") }
     val isInitialized = remember { mutableStateOf(false) }
     val initError = remember { mutableStateOf<String?>(null) }
-    val repository = remember { FirebaseRepository() }
+    val context = LocalContext.current
+    val repository = remember { FirebaseRepository(context) }
 
     // Initialize Firebase and create anonymous user
     LaunchedEffect(Unit) {
@@ -75,32 +111,7 @@ fun AppNavigation() {
     }
 
     if (!isInitialized.value) {
-        // Show loading state
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFFAFAFA)),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator(
-                color = Color(0xFFD32F2F)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Initializing...",
-                fontSize = 14.sp,
-                color = Color(0xFF999999)
-            )
-            if (initError.value != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Error: ${initError.value}",
-                    fontSize = 12.sp,
-                    color = Color(0xFFD32F2F)
-                )
-            }
-        }
+        InitSkeleton(initError.value)
         return
     }
 
