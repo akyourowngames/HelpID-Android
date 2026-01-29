@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
 }
 
@@ -37,6 +38,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
     buildFeatures {
         compose = true
     }
@@ -71,6 +73,20 @@ dependencies {
 
     // QR Code
     implementation(libs.zxing.core)
+
+    // Location
+    implementation(libs.play.services.location)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    
+    // Gson
+    implementation(libs.google.gson)
+
+    // Phone validation
+    implementation(libs.google.libphonenumber)
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))

@@ -16,13 +16,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -37,7 +38,12 @@ import androidx.compose.ui.draw.shadow
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.helpid.app.R
+import com.helpid.app.ui.components.GhostButton
+import com.helpid.app.ui.components.ScreenHeader
+import com.helpid.app.ui.components.ShimmerPlaceholder
 import com.helpid.app.ui.theme.HelpIDTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 fun generateQRCode(text: String, size: Int = 512): Bitmap {
     val writer = QRCodeWriter()
@@ -61,60 +67,52 @@ fun QRScreen(
 ) {
     val context = LocalContext.current
     val qrContent = "https://helpid.app/e/$userId"
-    val qrBitmap = generateQRCode(qrContent, 512)
+    val qrBitmap = remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(qrContent) {
+        qrBitmap.value = withContext(Dispatchers.Default) {
+            generateQRCode(qrContent, 512)
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ComposeColor(0xFFFAFAFA))
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header - Functional
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(ComposeColor(0xFF1A1A1A))
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(R.string.emergency_access),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Light,
-                color = ComposeColor.White,
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.5.sp
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = stringResource(R.string.scan_to_view),
-                fontSize = 12.sp,
-                color = ComposeColor.White.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.3.sp
-            )
-        }
+        ScreenHeader(
+            title = stringResource(R.string.emergency_access),
+            subtitle = stringResource(R.string.scan_to_view)
+        )
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // QR Code Container
         Box(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
-                .background(ComposeColor.White, RoundedCornerShape(12.dp))
-                .shadow(elevation = 1.dp, shape = RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
+                .shadow(elevation = 1.dp, shape = RoundedCornerShape(14.dp))
                 .padding(20.dp),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                bitmap = qrBitmap.asImageBitmap(),
-                contentDescription = "Emergency QR Code",
-                modifier = Modifier.size(260.dp),
-                contentScale = ContentScale.Fit
-            )
+            val bitmap = qrBitmap.value
+            if (bitmap == null) {
+                ShimmerPlaceholder(
+                    modifier = Modifier.size(260.dp),
+                    cornerRadius = 12.dp
+                )
+            } else {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Emergency QR Code",
+                    modifier = Modifier.size(260.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -123,7 +121,7 @@ fun QRScreen(
         Text(
             text = stringResource(R.string.scan_this_code),
             fontSize = 13.sp,
-            color = ComposeColor(0xFF666666),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             lineHeight = 19.sp,
             fontWeight = FontWeight.Light,
@@ -131,55 +129,17 @@ fun QRScreen(
                 .fillMaxWidth(0.85f)
                 .padding(horizontal = 16.dp)
         )
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Button(
-            onClick = {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, qrContent)
-                }
-                context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_qr_code)))
-            },
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .height(48.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ComposeColor(0xFFF5F5F5)
-            )
-        ) {
-            Text(
-                text = stringResource(R.string.share_qr_code),
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                color = ComposeColor(0xFF1A1A1A)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        // Back Button
-        Button(
+        GhostButton(
+            text = stringResource(R.string.back),
             onClick = onBackClick,
             modifier = Modifier
                 .fillMaxWidth(0.85f)
-                .height(50.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ComposeColor(0xFF1A1A1A)
-            )
-        ) {
-            Text(
-                text = stringResource(R.string.back),
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-                letterSpacing = 0.5.sp
-            )
-        }
+                .height(50.dp)
+        )
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

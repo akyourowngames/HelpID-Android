@@ -1,10 +1,15 @@
 package com.helpid.app.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,16 +31,20 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -53,10 +62,16 @@ import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import com.helpid.app.utils.LocationHelper
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.helpid.app.ui.components.ShimmerPlaceholder
+import com.helpid.app.ui.components.SkeletonSpacer
+import com.helpid.app.ui.components.SkeletonTextLine
+import com.helpid.app.ui.components.ScreenHeader
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.withTimeout
 
 data class EmergencyContact(
     val name: String,
@@ -72,14 +87,62 @@ fun EmergencyScreen(
     onLanguageClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val repository = remember { FirebaseRepository() }
+    val repository = remember { FirebaseRepository(context) }
+    val scope = rememberCoroutineScope()
+    val locationHelper = remember { LocationHelper(context) }
     
     val userProfile = remember { mutableStateOf(UserProfile.default(userId)) }
     val isLoading = remember { mutableStateOf(true) }
-    val isSending = remember { mutableStateOf(false) }
-    val loadError = remember { mutableStateOf(initError) }
-    
-    android.util.Log.d("EmergencyScreen", "Rendering with userId=$userId")
+    val loadError = remember { mutableStateOf<String?>(initError) }
+    val isSendingSos = remember { mutableStateOf(false) }
+
+    fun launchDial(number: String) {
+        val intent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.parse("tel:${number.replace(" ", "")}")
+        }
+        try {
+            context.startActivity(intent)
+        } catch (_: Exception) {
+        }
+    }
+
+    fun sendSos() {
+        if (isSendingSos.value) return
+        isSendingSos.value = true
+
+        val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
+        if (vibrator != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(500)
+            }
+        }
+
+        val hasSms = ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+        val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!hasSms || (!hasFine && !hasCoarse)) {
+            isSendingSos.value = false
+            return
+        }
+
+        Toast.makeText(context, "SOS triggered", Toast.LENGTH_SHORT).show()
+        isSendingSos.value = false
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { result ->
+            val sms = result[Manifest.permission.SEND_SMS] == true
+            val fine = result[Manifest.permission.ACCESS_FINE_LOCATION] == true
+            val coarse = result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            if (sms && (fine || coarse)) {
+                sendSos()
+            }
+        }
+    )
     
     // Load profile from Firebase with timeout
     LaunchedEffect(userId) {
@@ -124,9 +187,7 @@ fun EmergencyScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CircularProgressIndicator(color = Color(0xFFD32F2F), strokeWidth = 2.dp)
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(stringResource(R.string.loading), fontSize = 14.sp, color = Color(0xFF999999))
+            Text("Loading...", fontSize = 14.sp, color = Color(0xFF999999))
         }
         return
     }
@@ -163,7 +224,7 @@ fun EmergencyScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFAFAFA))
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -183,7 +244,7 @@ fun EmergencyScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = stringResource(R.string.emergency_id),
+                    text = "Emergency ID",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Light,
                     color = Color.White,
@@ -192,7 +253,7 @@ fun EmergencyScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = stringResource(R.string.for_medical_emergencies),
+                    text = "For use in medical emergencies",
                     fontSize = 12.sp,
                     color = Color.White.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
@@ -223,7 +284,7 @@ fun EmergencyScreen(
                 .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
             shape = RoundedCornerShape(8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = MaterialTheme.colorScheme.surface
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -244,7 +305,7 @@ fun EmergencyScreen(
                             text = stringResource(R.string.full_name),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF999999),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             letterSpacing = 0.3.sp
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -252,12 +313,12 @@ fun EmergencyScreen(
                             text = profile.name,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Light,
-                            color = Color(0xFF1A1A1A)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Box(
                         modifier = Modifier
-                            .background(Color(0xFFD32F2F), RoundedCornerShape(6.dp))
+                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(6.dp))
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -265,7 +326,7 @@ fun EmergencyScreen(
                             text = profile.bloodGroup,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -276,7 +337,7 @@ fun EmergencyScreen(
                         text = stringResource(R.string.medical_conditions),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF999999),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 0.3.sp
                     )
                     Column(
@@ -291,13 +352,13 @@ fun EmergencyScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(4.dp)
-                                        .background(Color(0xFFD32F2F), RoundedCornerShape(2.dp))
+                                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp))
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = note,
                                     fontSize = 13.sp,
-                                    color = Color(0xFF4A4A4A),
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     lineHeight = 16.sp
                                 )
                             }
@@ -310,7 +371,7 @@ fun EmergencyScreen(
                 Text(
                     text = lastUpdatedText,
                     fontSize = 10.sp,
-                    color = Color(0xFF999999),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Light
                 )
             }
@@ -324,7 +385,7 @@ fun EmergencyScreen(
                 .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
             shape = RoundedCornerShape(8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = MaterialTheme.colorScheme.surface
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -338,69 +399,53 @@ fun EmergencyScreen(
                     text = stringResource(R.string.emergency_contacts),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF999999),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 0.3.sp
                 )
 
-                if (emergencyContacts.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.no_emergency_contacts),
-                        fontSize = 12.sp,
-                        color = Color(0xFF999999),
-                        fontWeight = FontWeight.Light
-                    )
-                } else {
-                    emergencyContacts.forEach { contact ->
-                        Box(
+                emergencyContacts.forEach { contact ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Color(0xFFFAFAFA),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                launchDial(contact.phoneNumber)
+                            }
+                            .padding(12.dp)
+                    ) {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(
-                                    Color(0xFFFAFAFA),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    val intent = Intent(Intent.ACTION_CALL).apply {
-                                        data = Uri.parse("tel:${contact.phoneNumber.replace(" ", "")}")
-                                    }
-                                    try {
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        // Handle case where call permission is not granted
-                                    }
-                                }
-                                .padding(12.dp)
+                                .height(48.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = contact.name,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF1A1A1A)
-                                    )
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    Text(
-                                        text = contact.phoneNumber,
-                                        fontSize = 12.sp,
-                                        color = Color(0xFF666666),
-                                        fontWeight = FontWeight.Light
-                                    )
-                                }
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "☎",
-                                    fontSize = 18.sp,
-                                    color = Color(0xFFD32F2F)
+                                    text = contact.name,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF1A1A1A)
+                                )
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = contact.phoneNumber,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF666666),
+                                    fontWeight = FontWeight.Light
                                 )
                             }
+                            Text(
+                                text = "☎",
+                                fontSize = 18.sp,
+                                color = Color(0xFFD32F2F)
+                            )
                         }
                     }
                 }
@@ -574,56 +619,10 @@ fun EmergencyScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // SOS Button - Large Red Button
-            Button(
-                onClick = {
-                    isSending.value = true
-                    // Trigger haptic feedback
-                    val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
-                    if (vibrator != null) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            vibrator.vibrate(
-                                VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
-                            )
-                        } else {
-                            @Suppress("DEPRECATION")
-                            vibrator.vibrate(500)
-                        }
-                    }
-                    
-                    // Simulate sending SOS - in production, this would send to emergency contacts
-                    // For now, just trigger emergency call
-                    val intent = Intent(Intent.ACTION_CALL).apply {
-                        data = Uri.parse("tel:112")
-                    }
-                    try {
-                        context.startActivity(intent)
-                        isSending.value = false
-                    } catch (e: Exception) {
-                        isSending.value = false
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(70.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFD32F2F)
-                )
-            ) {
-                Text(
-                    text = if (isSending.value) stringResource(R.string.sos_sending) else stringResource(R.string.sos_button),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    letterSpacing = 1.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Primary: Emergency Call
             Button(
                 onClick = {
-                    val intent = Intent(Intent.ACTION_CALL).apply {
+                    val intent = Intent(Intent.ACTION_DIAL).apply {
                         data = Uri.parse("tel:112")
                     }
                     try {
@@ -637,7 +636,7 @@ fun EmergencyScreen(
                     .height(52.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFD32F2F)
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
                 Text(
@@ -645,6 +644,35 @@ fun EmergencyScreen(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
                     letterSpacing = 0.5.sp
+                )
+            }
+
+            // SOS Button
+            Button(
+                onClick = { 
+                    permissionLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.SEND_SMS,
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                ),
+                enabled = !isSendingSos.value
+            ) {
+                Text(
+                    text = if (isSendingSos.value) "SENDING SOS..." else "🚨 SEND SOS 🚨",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    letterSpacing = 0.5.sp,
+                    color = MaterialTheme.colorScheme.onError
                 )
             }
 
@@ -656,35 +684,18 @@ fun EmergencyScreen(
                     .height(48.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF5F5F5)
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
                 Text(
                     text = stringResource(R.string.show_qr_code),
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.sp,
-                    color = Color(0xFF1A1A1A)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
-            // Tertiary: Edit
-            Button(
-                onClick = onEditClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF5F5F5)
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.edit_profile),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    color = Color(0xFF1A1A1A)
-                )
-            }
+
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -697,4 +708,69 @@ fun EmergencyScreenPreview() {
     HelpIDTheme {
         EmergencyScreen(userId = "demo-user-id")
     }
+}
+
+@Composable
+private fun EmergencySkeleton() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.inverseSurface)
+                .padding(horizontal = 20.dp, vertical = 24.dp)
+        ) {
+            SkeletonTextLine(widthFraction = 0.5f, height = 22.dp)
+            SkeletonSpacer(8.dp)
+            SkeletonTextLine(widthFraction = 0.65f, height = 12.dp)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        SkeletonCard(height = 164.dp)
+        SkeletonCard(height = 196.dp)
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            ShimmerPlaceholder(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            )
+            ShimmerPlaceholder(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            )
+            ShimmerPlaceholder(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun SkeletonCard(height: androidx.compose.ui.unit.Dp) {
+    ShimmerPlaceholder(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .height(height),
+        cornerRadius = 12.dp
+    )
 }

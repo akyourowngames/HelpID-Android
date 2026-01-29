@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.helpid.app.data.FirebaseRepository
@@ -28,7 +29,11 @@ import com.helpid.app.ui.EditProfileScreen
 import com.helpid.app.ui.EmergencyScreen
 import com.helpid.app.ui.LanguageSelectionScreen
 import com.helpid.app.ui.QRScreen
+import com.helpid.app.ui.components.ShimmerPlaceholder
+import com.helpid.app.ui.components.SkeletonSpacer
+import com.helpid.app.ui.components.SkeletonTextLine
 import com.helpid.app.ui.theme.HelpIDTheme
+import com.helpid.app.utils.LanguageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -39,21 +44,46 @@ private const val TAG = "HelpID"
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, "MainActivity onCreate called")
-        try {
-            setContent {
-                HelpIDTheme {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        AppNavigation()
-                    }
+
+        // Restore saved language
+        val savedLanguage = LanguageManager.getSelectedLanguage(this)
+        LanguageManager.setLanguage(this, savedLanguage)
+
+        setContent {
+            HelpIDTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNavigation()
                 }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in setContent: ${e.message}", e)
-            e.printStackTrace()
+        }
+    }
+}
+
+@Composable
+private fun InitSkeleton(errorText: String?) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        ShimmerPlaceholder(
+            modifier = Modifier
+                .size(48.dp)
+        )
+        SkeletonSpacer(16.dp)
+        SkeletonTextLine(widthFraction = 0.4f, height = 12.dp)
+        if (errorText != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "Error: $errorText",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.error
+            )
         }
     }
 }
@@ -64,8 +94,10 @@ fun AppNavigation() {
     
     val currentScreen = remember { mutableStateOf("emergency") }
     val userId = remember { mutableStateOf("") }
-    val isInitError = remember { mutableStateOf<String?>(null) }
-    val repository = remember { FirebaseRepository() }
+    val isInitialized = remember { mutableStateOf(false) }
+    val initError = remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val repository = remember { FirebaseRepository(context) }
 
     // Initialize Firebase with timeout
     LaunchedEffect(Unit) {
@@ -80,38 +112,36 @@ fun AppNavigation() {
                         
                         if (initUserId.isNotEmpty()) {
                             userId.value = initUserId
+                            isInitialized.value = true
                         } else {
                             Log.w(TAG, "userId is empty")
-                            isInitError.value = "Failed to get user ID"
+                            initError.value = "Failed to initialize user"
                         }
                     }
                 } catch (e: TimeoutCancellationException) {
                     Log.w(TAG, "Firebase initialization timed out after 10 seconds")
-                    isInitError.value = "Initialization timeout - using offline mode"
-                    // Use a demo/offline user ID
-                    userId.value = "offline_user_${System.currentTimeMillis()}"
+                    initError.value = "Initialization timeout"
                 } catch (e: Exception) {
                     Log.e(TAG, "Error during Firebase init: ${e.message}", e)
-                    isInitError.value = e.message ?: "Unknown error"
-                    // Use offline user ID on any error
-                    userId.value = "offline_user_${System.currentTimeMillis()}"
+                    initError.value = e.message ?: "Unknown error"
                 }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Exception in LaunchedEffect: ${e.message}", e)
-            isInitError.value = e.message ?: "Unknown error"
-            userId.value = "offline_user_${System.currentTimeMillis()}"
+            initError.value = e.message ?: "Unknown error"
         }
     }
 
-    // Don't wait for initialization - go straight to emergency screen
-    // The profile loading happens inside EmergencyScreen
+    if (!isInitialized.value) {
+        InitSkeleton(initError.value)
+        return
+    }
+
     when (currentScreen.value) {
         "emergency" -> {
             Log.d(TAG, "Rendering EmergencyScreen")
             EmergencyScreen(
                 userId = userId.value,
-                initError = isInitError.value,
                 onShowQRClick = { currentScreen.value = "qr" },
                 onEditClick = { currentScreen.value = "edit" },
                 onLanguageClick = { currentScreen.value = "language" }

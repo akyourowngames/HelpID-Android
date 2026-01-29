@@ -13,10 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
@@ -34,6 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.helpid.app.R
+import com.helpid.app.ui.components.GhostButton
+import com.helpid.app.ui.components.PrimaryButton
+import com.helpid.app.ui.components.ScreenHeader
 import com.helpid.app.utils.LanguageManager
 
 @Composable
@@ -48,37 +50,15 @@ fun LanguageSelectionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFAFAFA))
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF1A1A1A))
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(R.string.select_language),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Light,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.5.sp
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = stringResource(R.string.choose_language_helper),
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.3.sp
-            )
-        }
+        ScreenHeader(
+            title = stringResource(R.string.select_language),
+            subtitle = "Choose your preferred language"
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -89,7 +69,7 @@ fun LanguageSelectionScreen(
                 .padding(horizontal = 16.dp)
                 .shadow(elevation = 1.dp, shape = RoundedCornerShape(8.dp)),
             shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(
@@ -118,46 +98,24 @@ fun LanguageSelectionScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Save Button
-            Button(
+            PrimaryButton(
+                text = "APPLY",
                 onClick = {
                     LanguageManager.setLanguage(context, selectedLanguage.value)
                     onLanguageSelected()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFD32F2F)
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.apply),
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
-                    letterSpacing = 0.5.sp
-                )
-            }
+                    .height(50.dp)
+            )
 
-            // Back Button
-            Button(
+            GhostButton(
+                text = stringResource(R.string.back),
                 onClick = onBackClick,
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
-                    .height(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.back),
-                    fontWeight = FontWeight.Light,
-                    fontSize = 12.sp,
-                    color = Color(0xFF999999)
-                )
-            }
+                    .height(40.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -175,7 +133,7 @@ fun LanguageOption(
             .fillMaxWidth()
             .clickable(onClick = onSelect)
             .background(
-                if (isSelected) Color(0xFFFFF3E0) else Color(0xFFFAFAFA),
+                if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(12.dp),
@@ -186,15 +144,15 @@ fun LanguageOption(
             text = language.displayName,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFF1A1A1A),
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
         RadioButton(
             selected = isSelected,
             onClick = onSelect,
             colors = RadioButtonDefaults.colors(
-                selectedColor = Color(0xFFD32F2F),
-                unselectedColor = Color(0xFFBDBDBD)
+                selectedColor = MaterialTheme.colorScheme.primary,
+                unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         )
     }
