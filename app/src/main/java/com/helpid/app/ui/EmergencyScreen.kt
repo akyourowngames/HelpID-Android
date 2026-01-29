@@ -41,7 +41,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -84,7 +83,6 @@ data class EmergencyContact(
 fun EmergencyScreen(
     userId: String,
     initError: String? = null,
-    onShowQRClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onLanguageClick: () -> Unit = {}
 ) {
@@ -227,7 +225,7 @@ fun EmergencyScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF1A1A1A))
+                .background(Color.Transparent)
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -256,25 +254,13 @@ fun EmergencyScreen(
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                IconButton(
-                    onClick = onShowQRClick,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(Color(0xFF333333), RoundedCornerShape(8.dp))
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.QrCode,
-                        contentDescription = "Show QR",
-                        tint = Color.White
-                    )
-                }
                 IconButton(
                     onClick = onEditClick,
                     modifier = Modifier
                         .size(40.dp)
-                        .background(Color(0xFF333333), RoundedCornerShape(8.dp))
+                        .background(Color.Transparent, RoundedCornerShape(10.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Edit,
@@ -286,7 +272,7 @@ fun EmergencyScreen(
                     onClick = onLanguageClick,
                     modifier = Modifier
                         .size(40.dp)
-                        .background(Color(0xFF333333), RoundedCornerShape(8.dp))
+                        .background(Color.Transparent, RoundedCornerShape(10.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Language,
@@ -600,7 +586,7 @@ fun EmergencyScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // SOS Button - Large Red Button
@@ -660,26 +646,6 @@ fun EmergencyScreen(
                     color = MaterialTheme.colorScheme.onError
                 )
             }
-
-            // Secondary: QR Code
-            Button(
-                onClick = onShowQRClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.show_qr_code),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
 
         }
 

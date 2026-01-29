@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -27,7 +28,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material3.Icon
@@ -39,6 +39,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -175,7 +177,6 @@ fun AppNavigation() {
                     Log.d(TAG, "Rendering EmergencyScreen")
                     EmergencyScreen(
                         userId = userId.value,
-                        onShowQRClick = { currentScreen.value = "qr" },
                         onEditClick = { currentScreen.value = "edit" },
                         onLanguageClick = { currentScreen.value = "language" }
                     )
@@ -212,69 +213,72 @@ private fun HelpIdBottomBar(
     currentRoute: String,
     onRouteSelected: (String) -> Unit
 ) {
-    val container = MaterialTheme.colorScheme.surface
-    val pill = MaterialTheme.colorScheme.inverseSurface
     val inactive = MaterialTheme.colorScheme.onSurfaceVariant
     val active = MaterialTheme.colorScheme.primary
+    val glow = active.copy(alpha = 0.18f)
+    val pillGradient = Brush.linearGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.surface
+        )
+    )
 
-    Surface(
-        tonalElevation = 6.dp,
-        shadowElevation = 10.dp,
-        color = container
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp, vertical = 14.dp)
     ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(68.dp)
+                .shadow(18.dp, RoundedCornerShape(30.dp)),
+            shape = RoundedCornerShape(30.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 2.dp
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(pillGradient)
+            )
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(78.dp)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .height(68.dp)
+                .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Surface(
-                color = pill,
-                shape = RoundedCornerShape(28.dp),
-                tonalElevation = 0.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    BottomItem(
-                        isSelected = currentRoute == "emergency",
-                        label = "ID",
-                        icon = Icons.Outlined.Home,
-                        activeColor = active,
-                        inactiveColor = inactive,
-                        onClick = { onRouteSelected("emergency") }
-                    )
-                    BottomItem(
-                        isSelected = currentRoute == "qr",
-                        label = "QR",
-                        icon = Icons.Outlined.QrCode,
-                        activeColor = active,
-                        inactiveColor = inactive,
-                        onClick = { onRouteSelected("qr") }
-                    )
-                    BottomItem(
-                        isSelected = currentRoute == "edit",
-                        label = "Profile",
-                        icon = Icons.Outlined.Person,
-                        activeColor = active,
-                        inactiveColor = inactive,
-                        onClick = { onRouteSelected("edit") }
-                    )
-                    BottomItem(
-                        isSelected = currentRoute == "language",
-                        label = "Lang",
-                        icon = Icons.Outlined.Language,
-                        activeColor = active,
-                        inactiveColor = inactive,
-                        onClick = { onRouteSelected("language") }
-                    )
-                }
-            }
+            BottomItem(
+                isSelected = currentRoute == "emergency",
+                label = "ID",
+                icon = Icons.Outlined.Home,
+                activeColor = active,
+                inactiveColor = inactive,
+                glowColor = glow,
+                onClick = { onRouteSelected("emergency") }
+            )
+            BottomItem(
+                isSelected = currentRoute == "qr",
+                label = "QR",
+                icon = Icons.Outlined.QrCode,
+                activeColor = active,
+                inactiveColor = inactive,
+                glowColor = glow,
+                onClick = { onRouteSelected("qr") }
+            )
+            BottomItem(
+                isSelected = currentRoute == "edit",
+                label = "Profile",
+                icon = Icons.Outlined.Person,
+                activeColor = active,
+                inactiveColor = inactive,
+                glowColor = glow,
+                onClick = { onRouteSelected("edit") }
+            )
         }
     }
 }
@@ -286,6 +290,7 @@ private fun BottomItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     activeColor: Color,
     inactiveColor: Color,
+    glowColor: Color,
     onClick: () -> Unit
 ) {
     val targetColor by animateColorAsState(
@@ -293,31 +298,31 @@ private fun BottomItem(
         label = "bottomItemColor"
     )
     val targetWidth by animateDpAsState(
-        targetValue = if (isSelected) 104.dp else 46.dp,
+        targetValue = if (isSelected) 112.dp else 48.dp,
         label = "bottomItemWidth"
     )
     val bg by animateColorAsState(
-        targetValue = if (isSelected) activeColor.copy(alpha = 0.14f) else Color.Transparent,
+        targetValue = if (isSelected) glowColor else Color.Transparent,
         label = "bottomItemBg"
     )
 
     Surface(
         color = bg,
-        shape = RoundedCornerShape(22.dp)
+        shape = RoundedCornerShape(24.dp)
     ) {
         Row(
             modifier = Modifier
                 .width(targetWidth)
-                .height(46.dp)
-                .padding(horizontal = 6.dp),
+                .height(52.dp)
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             IconButton(
                 onClick = onClick,
                 modifier = Modifier
-                    .size(40.dp)
-                    .background(Color.Transparent, RoundedCornerShape(20.dp))
+                    .size(42.dp)
+                    .background(Color.Transparent, CircleShape)
             ) {
                 Icon(
                     imageVector = icon,
@@ -330,9 +335,10 @@ private fun BottomItem(
                 Text(
                     text = label,
                     color = targetColor,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    letterSpacing = 0.3.sp
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
             }
         }
     }
