@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.room.Room
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.gson.Gson
 import com.helpid.app.data.local.AppDatabase
 import com.helpid.app.data.local.LocalEmergencyContact
 import com.helpid.app.data.local.LocalUserProfile
@@ -16,9 +17,11 @@ class FirebaseRepository(context: Context? = null) {
     private val firestore = FirebaseFirestore.getInstance()
     private val localDb = context?.let { AppDatabase.getDatabase(it) }
     private val sharedPrefs = context?.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+    private val gson = Gson()
     private var demoMode = false
     private var currentUserId = ""
     private val lastUserIdKey = "last_user_id"
+    private val pendingProfileKey = "pending_profile"
 
     private fun mapLocalToDomain(local: LocalUserProfile): UserProfile {
         return UserProfile(
@@ -149,6 +152,38 @@ class FirebaseRepository(context: Context? = null) {
         return profile
     }
 
+    private fun cachePendingProfile(profile: UserProfile) {
+        sharedPrefs?.edit()?.putString(pendingProfileKey, gson.toJson(profile))?.apply()
+    }
+
+    private fun clearPendingProfile() {
+        sharedPrefs?.edit()?.remove(pendingProfileKey)?.apply()
+    }
+
+    private fun getPendingProfile(): UserProfile? {
+        val raw = sharedPrefs?.getString(pendingProfileKey, null) ?: return null
+        return try {
+            gson.fromJson(raw, UserProfile::class.java)
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Failed to parse pending profile: ${e.message}")
+            null
+        }
+    }
+
+    suspend fun syncPendingProfile(userId: String): Boolean {
+        val pending = getPendingProfile() ?: return false
+        if (pending.userId.isEmpty() || pending.userId != userId) return false
+        if (demoMode) return false
+        return try {
+            firestore.collection("users").document(userId).set(pending.toMap()).await()
+            clearPendingProfile()
+            true
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Pending profile sync failed: ${e.message}")
+            false
+        }
+    }
+
     suspend fun getUserProfile(userId: String): UserProfile {
         // 1. Try local cache first
         val cachedProfile = getCachedUserProfile(userId)
@@ -167,35 +202,36 @@ class FirebaseRepository(context: Context? = null) {
     }
 
     suspend fun updateUserProfile(userId: String, profile: UserProfile): Boolean {
-        return try {
-            if (demoMode) {
-                Log.d("FirebaseRepository", "Demo mode: profile update simulated")
-                return true
-            }
-            
-            Log.d("FirebaseRepository", "Updating profile for user: $userId")
-            val updatedProfile = profile.copy(
-                userId = userId,
-                lastUpdated = System.currentTimeMillis()
-            )
-            firestore.collection("users").document(userId).set(updatedProfile.toMap()).await()
-            
-            // Update Local DB
-            if (localDb != null) {
-                try {
-                    localDb.userProfileDao().insertUserProfile(mapDomainToLocal(updatedProfile))
-                    Log.d("FirebaseRepository", "Updated local profile")
-                } catch (e: Exception) {
-                    Log.e("FirebaseRepository", "Failed to update local profile: ${e.message}")
-                }
-            }
+        val updatedProfile = profile.copy(
+            userId = userId,
+            lastUpdated = System.currentTimeMillis()
+        )
 
+        // Always update local cache first
+        if (localDb != null) {
+            try {
+                localDb.userProfileDao().insertUserProfile(mapDomainToLocal(updatedProfile))
+                Log.d("FirebaseRepository", "Updated local profile")
+            } catch (e: Exception) {
+                Log.e("FirebaseRepository", "Failed to update local profile: ${e.message}")
+            }
+        }
+
+        if (demoMode) {
+            cachePendingProfile(updatedProfile)
+            return true
+        }
+
+        return try {
+            Log.d("FirebaseRepository", "Updating profile for user: $userId")
+            firestore.collection("users").document(userId).set(updatedProfile.toMap()).await()
+            clearPendingProfile()
             Log.d("FirebaseRepository", "Profile updated successfully")
             true
         } catch (e: Exception) {
             Log.e("FirebaseRepository", "Error updating profile: ${e.message}", e)
-            // In demo mode, just return true
-            if (demoMode) true else false
+            cachePendingProfile(updatedProfile)
+            true
         }
     }
 

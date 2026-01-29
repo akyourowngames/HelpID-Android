@@ -42,19 +42,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Call
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Message
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -62,7 +61,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -74,14 +75,12 @@ import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.helpid.app.utils.LocationHelper
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.helpid.app.ui.components.ShimmerPlaceholder
 import com.helpid.app.ui.components.SkeletonSpacer
 import com.helpid.app.ui.components.SkeletonTextLine
-import com.helpid.app.ui.components.ScreenHeader
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.withTimeout
 
@@ -93,17 +92,14 @@ data class EmergencyContact(
 @Composable
 fun EmergencyScreen(
     userId: String,
-    initError: String? = null,
     onLanguageClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val repository = remember { FirebaseRepository(context) }
-    val scope = rememberCoroutineScope()
-    val locationHelper = remember { LocationHelper(context) }
+    val clipboardManager = LocalClipboardManager.current
     
     val userProfile = remember { mutableStateOf(UserProfile.default(userId)) }
     val isLoading = remember { mutableStateOf(true) }
-    val loadError = remember { mutableStateOf<String?>(initError) }
     val isSendingSos = remember { mutableStateOf(false) }
     val isOnline = remember { mutableStateOf(true) }
     val syncTick = remember { mutableStateOf(0) }
@@ -116,6 +112,21 @@ fun EmergencyScreen(
             context.startActivity(intent)
         } catch (_: Exception) {
         }
+    }
+
+    fun launchSms(number: String) {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("smsto:${number.replace(" ", "")}")
+        }
+        try {
+            context.startActivity(intent)
+        } catch (_: Exception) {
+        }
+    }
+
+    fun copyNumber(number: String) {
+        clipboardManager.setText(AnnotatedString(number))
+        Toast.makeText(context, "Number copied", Toast.LENGTH_SHORT).show()
     }
 
     fun sendSos() {
@@ -208,7 +219,6 @@ fun EmergencyScreen(
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("EmergencyScreen", "Error loading profile: ${e.message}", e)
-                        loadError.value = "Profile load error: ${e.message}"
                         if (!hasCached) {
                             userProfile.value = UserProfile.default(userId)
                         }
@@ -220,7 +230,6 @@ fun EmergencyScreen(
             }
         } catch (e: Exception) {
             android.util.Log.e("EmergencyScreen", "Exception in LaunchedEffect: ${e.message}", e)
-            loadError.value = e.message
         } finally {
             if (!hasCached) {
                 isLoading.value = false
@@ -233,6 +242,7 @@ fun EmergencyScreen(
         if (!isOnline.value || userId.isEmpty()) return@LaunchedEffect
         withContext(Dispatchers.IO) {
             try {
+                repository.syncPendingProfile(userId)
                 withTimeout(5000L) {
                     val profile = repository.getUserProfile(userId)
                     userProfile.value = profile
@@ -545,12 +555,6 @@ fun EmergencyScreen(
                                 Color(0xFFFAFAFA),
                                 shape = RoundedCornerShape(8.dp)
                             )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                launchDial(contact.phoneNumber)
-                            }
                             .padding(12.dp)
                     ) {
                         Row(
@@ -575,11 +579,29 @@ fun EmergencyScreen(
                                     fontWeight = FontWeight.Light
                                 )
                             }
-                            Text(
-                                text = "☎",
-                                fontSize = 18.sp,
-                                color = Color(0xFFD32F2F)
-                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                IconButton(onClick = { launchDial(contact.phoneNumber) }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Call,
+                                        contentDescription = "Call",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                IconButton(onClick = { launchSms(contact.phoneNumber) }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Message,
+                                        contentDescription = "SMS",
+                                        tint = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+                                IconButton(onClick = { copyNumber(contact.phoneNumber) }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.ContentCopy,
+                                        contentDescription = "Copy",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
                 }
