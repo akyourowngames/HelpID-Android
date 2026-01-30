@@ -9,7 +9,12 @@ import com.google.gson.Gson
 import com.helpid.app.data.local.AppDatabase
 import com.helpid.app.data.local.LocalEmergencyContact
 import com.helpid.app.data.local.LocalUserProfile
+import java.net.HttpURLConnection
+import java.net.URL
+import java.io.OutputStreamWriter
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class FirebaseRepository(context: Context? = null) {
@@ -22,6 +27,14 @@ class FirebaseRepository(context: Context? = null) {
     private var currentUserId = ""
     private val lastUserIdKey = "last_user_id"
     private val pendingProfileKey = "pending_profile"
+    private val publicKeyKey = "public_profile_key"
+    private val webBaseUrlKey = "web_base_url"
+
+    private data class MintResponse(
+        val publicKey: String? = null,
+        val token: String? = null,
+        val url: String? = null
+    )
 
     private fun mapLocalToDomain(local: LocalUserProfile): UserProfile {
         return UserProfile(
@@ -240,7 +253,73 @@ class FirebaseRepository(context: Context? = null) {
     }
 
     fun getEmergencyLink(userId: String): String {
-        return "https://helpid.app/e/$userId"
+        return "https://helper-id.vercel.app/e/$userId"
+    }
+
+    suspend fun mintEmergencyLink(): String {
+        if (demoMode) return ""
+
+        val user = auth.currentUser ?: return ""
+        val idToken = try {
+            user.getIdToken(true).await().token.orEmpty()
+        } catch (e: Exception) {
+            Log.e("FirebaseRepository", "Failed to get ID token: ${e.message}")
+            ""
+        }
+
+        if (idToken.isEmpty()) return ""
+
+        val baseUrl = sharedPrefs?.getString(webBaseUrlKey, null)?.takeIf { it.isNotBlank() }
+            ?: "https://helper-id.vercel.app"
+
+        val cachedPublicKey = sharedPrefs?.getString(publicKeyKey, "").orEmpty().trim()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val url = URL("$baseUrl/api/mint")
+                val conn = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("Authorization", "Bearer $idToken")
+                }
+
+                val body = if (cachedPublicKey.isNotEmpty()) {
+                    "{\"publicKey\":\"$cachedPublicKey\"}"
+                } else {
+                    "{}"
+                }
+
+                OutputStreamWriter(conn.outputStream).use { it.write(body) }
+
+                val code = conn.responseCode
+                val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+                val raw = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                if (code !in 200..299) {
+                    Log.e("FirebaseRepository", "Mint failed: HTTP $code $raw")
+                    return@withContext ""
+                }
+
+                val parsed = try {
+                    gson.fromJson(raw, MintResponse::class.java)
+                } catch (e: Exception) {
+                    Log.e("FirebaseRepository", "Mint parse failed: ${e.message}")
+                    null
+                }
+
+                val pk = parsed?.publicKey.orEmpty()
+                if (pk.isNotEmpty()) {
+                    sharedPrefs?.edit()?.putString(publicKeyKey, pk)?.apply()
+                }
+
+                parsed?.url.orEmpty()
+            } catch (e: Exception) {
+                Log.e("FirebaseRepository", "Mint link error: ${e.message}")
+                ""
+            }
+        }
     }
 
     fun isDemoMode(): Boolean = demoMode

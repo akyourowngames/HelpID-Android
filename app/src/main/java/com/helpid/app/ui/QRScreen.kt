@@ -43,6 +43,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.shadow
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import com.helpid.app.data.FirebaseRepository
 import com.helpid.app.R
 import com.helpid.app.ui.components.GhostButton
 import com.helpid.app.ui.components.ScreenHeader
@@ -73,9 +74,13 @@ fun QRScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+    val repository = remember { FirebaseRepository(context) }
     val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
     val isNfcActive = remember { mutableStateOf(false) }
-    val qrContent = "https://helpid.app/e/$userId"
+    val qrContentState = remember { mutableStateOf("") }
+    val isMinting = remember { mutableStateOf(false) }
+    val mintError = remember { mutableStateOf<String?>(null) }
+    val mintNonce = remember { mutableStateOf(0) }
     val qrBitmap = remember { mutableStateOf<Bitmap?>(null) }
 
     fun setBeamMessage(message: NdefMessage?) {
@@ -91,8 +96,9 @@ fun QRScreen(
         }
     }
 
-    DisposableEffect(isNfcActive.value, userId) {
-        if (nfcAdapter == null || activity == null || userId.isEmpty()) {
+    DisposableEffect(isNfcActive.value, qrContentState.value) {
+        val qrContent = qrContentState.value
+        if (nfcAdapter == null || activity == null || qrContent.isEmpty()) {
             onDispose { }
         } else {
             if (isNfcActive.value) {
@@ -109,10 +115,29 @@ fun QRScreen(
         }
     }
 
-    LaunchedEffect(qrContent) {
-        qrBitmap.value = withContext(Dispatchers.Default) {
-            generateQRCode(qrContent, 512)
+    suspend fun mintAndUpdate() {
+        if (userId.isEmpty()) return
+        isMinting.value = true
+        mintError.value = null
+
+        val minted = repository.mintEmergencyLink()
+        if (minted.isBlank()) {
+            mintError.value = "Unable to generate secure link. Check internet and try again."
+            qrContentState.value = ""
+            qrBitmap.value = null
+            isMinting.value = false
+            return
         }
+
+        qrContentState.value = minted
+        qrBitmap.value = withContext(Dispatchers.Default) {
+            generateQRCode(minted, 512)
+        }
+        isMinting.value = false
+    }
+
+    LaunchedEffect(userId, mintNonce.value) {
+        mintAndUpdate()
     }
 
     Column(
@@ -197,7 +222,12 @@ fun QRScreen(
             contentAlignment = Alignment.Center
         ) {
             val bitmap = qrBitmap.value
-            if (bitmap == null) {
+            if (isMinting.value) {
+                ShimmerPlaceholder(
+                    modifier = Modifier.size(260.dp),
+                    cornerRadius = 12.dp
+                )
+            } else if (bitmap == null) {
                 ShimmerPlaceholder(
                     modifier = Modifier.size(260.dp),
                     cornerRadius = 12.dp
@@ -209,6 +239,35 @@ fun QRScreen(
                     modifier = Modifier.size(260.dp),
                     contentScale = ContentScale.Fit
                 )
+            }
+        }
+
+        if (mintError.value != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = mintError.value ?: "",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Button(
+                onClick = { 
+                    if (!isMinting.value) {
+                        // retry mint
+                        mintError.value = null
+                        mintNonce.value = mintNonce.value + 1
+                    }
+                },
+                modifier = Modifier
+                    .height(42.dp)
+                    .fillMaxWidth(0.6f),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(text = "RETRY", fontSize = 12.sp, letterSpacing = 0.6.sp)
             }
         }
 
