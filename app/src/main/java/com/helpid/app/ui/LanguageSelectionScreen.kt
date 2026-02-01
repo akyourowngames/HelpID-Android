@@ -1,5 +1,6 @@
 package com.helpid.app.ui
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -122,6 +123,7 @@ fun LanguageSelectionScreen(
                 text = stringResource(R.string.apply),
                 onClick = {
                     LanguageManager.setLanguage(context, selectedLanguage.value)
+                    (context as? Activity)?.recreate()
                     onLanguageSelected()
                 },
                 modifier = Modifier
@@ -196,7 +198,7 @@ fun LanguageOption(
                         onClick = onSelect,
                         label = {
                             Text(
-                                text = "Selected",
+                                text = stringResource(R.string.selected),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold
                             )

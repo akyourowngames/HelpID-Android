@@ -9,6 +9,8 @@ data class LocalUserProfile(
     @PrimaryKey val userId: String,
     val name: String,
     val bloodGroup: String,
+    val address: String,
+    val allergies: List<String>,
     val medicalNotes: List<String>,
     val emergencyContacts: List<LocalEmergencyContact>,
     val language: String,

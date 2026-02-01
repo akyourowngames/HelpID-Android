@@ -11,6 +11,8 @@ data class UserProfile(
     val userId: String = "",
     val name: String = "",
     val bloodGroup: String = "",
+    val address: String = "",
+    val allergies: List<String> = emptyList(),
     val medicalNotes: List<String> = emptyList(),
     val emergencyContacts: List<EmergencyContactData> = emptyList(),
     val language: String = "en",
@@ -21,6 +23,8 @@ data class UserProfile(
         "userId" to userId,
         "name" to name,
         "bloodGroup" to bloodGroup,
+        "address" to address,
+        "allergies" to allergies,
         "medicalNotes" to medicalNotes,
         "emergencyContacts" to emergencyContacts.map { 
             mapOf(
@@ -38,6 +42,8 @@ data class UserProfile(
             userId = userId,
             name = "John Doe",
             bloodGroup = "O+",
+            address = "",
+            allergies = emptyList(),
             medicalNotes = listOf(
                 "Diabetic",
                 "High Blood Pressure"

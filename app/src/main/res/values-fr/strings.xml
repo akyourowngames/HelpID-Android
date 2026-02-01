@@ -7,7 +7,9 @@
     <string name="for_medical_emergencies">À utiliser en cas d’urgence médicale</string>
     <string name="full_name">Nom Complet</string>
     <string name="blood_group">Groupe Sanguin</string>
-    <string name="medical_conditions">Conditions Médicales</string>
+    <string name="address">Adresse</string>
+    <string name="allergies">Allergies</string>
+    <string name="medical_conditions">Infos médicales supplémentaires</string>
     <string name="updated">Mis à jour: %s</string>
     <string name="emergency_contacts">Contacts d’urgence</string>
     <string name="call_emergency">APPELER URGENCE • 112</string>
@@ -16,6 +18,23 @@
     <string name="sos_button">SOS</string>
     <string name="sos_sending">Envoi de l’alerte d’urgence...</string>
     <string name="sos_sent">Alerte d’urgence envoyée!</string>
+    <string name="sos_send">ENVOYER SOS</string>
+    <string name="sos_sending_short">ENVOI SOS...</string>
+    <string name="online_sync">Synchronisation en ligne</string>
+    <string name="offline_mode">Mode hors ligne</string>
+    <string name="info">INFO</string>
+    <string name="toast_number_copied">Numéro copié</string>
+    <string name="toast_sos_triggered">SOS déclenché</string>
+    <string name="toast_sos_no_contacts">Ajoutez au moins un contact d’urgence</string>
+    <string name="toast_sos_sms_failed">Échec de l’envoi du SMS SOS</string>
+    <string name="cd_language">Langue</string>
+    <string name="cd_call">Appeler</string>
+    <string name="cd_sms">SMS</string>
+    <string name="cd_copy">Copier</string>
+    <string name="notification_sos_delivered_title">SOS envoyé</string>
+    <string name="notification_sos_delivered_text">Alerte d’urgence envoyée avec succès.</string>
+    <string name="notification_sos_failed_title">SOS échoué</string>
+    <string name="notification_sos_failed_text">Impossible d’envoyer l’alerte d’urgence.</string>
     <string name="loading">Chargement...</string>
     <string name="no_emergency_contacts">Aucun contact d’urgence ajouté</string>
     
@@ -52,6 +71,7 @@
     <string name="select_language">Sélectionner la Langue</string>
     <string name="choose_language_helper">Choisissez votre langue préférée</string>
     <string name="apply">APPLIQUER</string>
+    <string name="selected">Sélectionné</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>
     <string name="language_hindi">हिंदी</string>

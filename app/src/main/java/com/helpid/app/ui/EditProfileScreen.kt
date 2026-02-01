@@ -80,6 +80,8 @@ fun EditProfileScreen(
     
     val name = remember { mutableStateOf("") }
     val bloodGroup = remember { mutableStateOf("") }
+    val address = remember { mutableStateOf("") }
+    val allergies = remember { mutableStateOf("") }
     val medicalNotes = remember { mutableStateOf("") }
     val emergencyContacts = remember { mutableStateListOf<EmergencyContactData>() }
 
@@ -200,6 +202,8 @@ fun EditProfileScreen(
             // Populate fields
             name.value = loadedProfile.name
             bloodGroup.value = loadedProfile.bloodGroup
+            address.value = loadedProfile.address
+            allergies.value = loadedProfile.allergies.joinToString("\n")
             medicalNotes.value = loadedProfile.medicalNotes.joinToString("\n")
             
             emergencyContacts.clear()
@@ -273,6 +277,12 @@ fun EditProfileScreen(
                         onValueChange = { bloodGroup.value = sanitizeBloodGroupInput(it) }
                     )
 
+                    FormField(
+                        label = stringResource(R.string.address),
+                        value = address.value,
+                        onValueChange = { address.value = it.take(120) }
+                    )
+
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
@@ -283,7 +293,29 @@ fun EditProfileScreen(
                         letterSpacing = 0.2.sp
                     )
 
-                    // Medical Notes
+                    Text(
+                        text = stringResource(R.string.allergies),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 0.3.sp
+                    )
+                    TextField(
+                        value = allergies.value,
+                        onValueChange = { allergies.value = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(90.dp),
+                        placeholder = { Text(stringResource(R.string.one_per_line)) },
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+
                     Text(
                         text = stringResource(R.string.medical_conditions),
                         fontSize = 11.sp,
@@ -390,6 +422,12 @@ fun EditProfileScreen(
                             userId = userId,
                             name = name.value,
                             bloodGroup = bloodGroup.value,
+                            address = address.value.trim(),
+                            allergies = allergies.value
+                                .replace(",", "\n")
+                                .split("\n")
+                                .map { it.trim() }
+                                .filter { it.isNotBlank() },
                             medicalNotes = medicalNotes.value.split("\n").filter { it.isNotBlank() },
                             emergencyContacts = emergencyContacts
                                 .filter { it.name.isNotBlank() && it.phone.isNotBlank() },

@@ -48,7 +48,7 @@ object PDFExporter {
             
             // Medical Conditions Section
             if (profile.medicalNotes.isNotEmpty()) {
-                addSection(document, "MEDICAL CONDITIONS")
+                addSection(document, "EXTRA MEDICAL INFO")
                 profile.medicalNotes.forEach { note ->
                     document.add(Paragraph("• $note", Font(Font.FontFamily.HELVETICA, 11f)))
                 }

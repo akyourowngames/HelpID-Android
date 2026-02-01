@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.content.Intent
+import android.location.Location
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
@@ -15,6 +16,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.telephony.SmsManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -78,8 +80,12 @@ import com.helpid.app.data.FirebaseRepository
 import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
 import com.helpid.app.utils.NotificationHelper
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -88,6 +94,7 @@ import com.helpid.app.ui.components.SkeletonSpacer
 import com.helpid.app.ui.components.SkeletonTextLine
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.withTimeout
+import androidx.compose.runtime.rememberCoroutineScope
 
 data class EmergencyContact(
     val name: String,
@@ -103,6 +110,7 @@ fun EmergencyScreen(
     val repository = remember { FirebaseRepository(context) }
     val clipboardManager = LocalClipboardManager.current
     val notificationHelper = remember { NotificationHelper(context) }
+    val scope = rememberCoroutineScope()
     val activity = context as? Activity
     val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
     val isNfcActive = remember { mutableStateOf(false) }
@@ -112,6 +120,7 @@ fun EmergencyScreen(
     val isSendingSos = remember { mutableStateOf(false) }
     val isOnline = remember { mutableStateOf(true) }
     val syncTick = remember { mutableStateOf(0) }
+    val nfcShareUrl = remember { mutableStateOf("") }
 
     fun launchDial(number: String) {
         val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -136,13 +145,14 @@ fun EmergencyScreen(
         }
     }
 
-    DisposableEffect(isNfcActive.value, userId) {
-        if (nfcAdapter == null || activity == null || userId.isEmpty()) {
+    DisposableEffect(isNfcActive.value, nfcShareUrl.value) {
+        val urlToBeam = nfcShareUrl.value
+        if (nfcAdapter == null || activity == null || urlToBeam.isEmpty()) {
             onDispose { }
         } else {
             if (isNfcActive.value) {
                 val message = NdefMessage(
-                    arrayOf(NdefRecord.createUri("https://helpid.app/e/$userId"))
+                    arrayOf(NdefRecord.createUri(urlToBeam))
                 )
                 setBeamMessage(message)
             } else {
@@ -166,12 +176,23 @@ fun EmergencyScreen(
 
     fun copyNumber(number: String) {
         clipboardManager.setText(AnnotatedString(number))
-        Toast.makeText(context, "Number copied", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.toast_number_copied), Toast.LENGTH_SHORT).show()
     }
 
     fun sendSos() {
         if (isSendingSos.value) return
         isSendingSos.value = true
+
+        val contacts = userProfile.value.emergencyContacts
+            .map { EmergencyContact(name = it.name, phoneNumber = it.phone) }
+            .filter { it.phoneNumber.isNotBlank() }
+
+        if (contacts.isEmpty()) {
+            Toast.makeText(context, context.getString(R.string.toast_sos_no_contacts), Toast.LENGTH_SHORT).show()
+            notificationHelper.showSosFailed()
+            isSendingSos.value = false
+            return
+        }
 
         val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
         if (vibrator != null) {
@@ -192,9 +213,68 @@ fun EmergencyScreen(
             return
         }
 
-        Toast.makeText(context, "SOS triggered", Toast.LENGTH_SHORT).show()
-        notificationHelper.showSosDelivered()
-        isSendingSos.value = false
+        scope.launch {
+            try {
+                val profile = userProfile.value
+
+                val location: Location? = withContext(Dispatchers.IO) {
+                    val fused = LocationServices.getFusedLocationProviderClient(context)
+                    val hasFinePerm = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    val hasCoarsePerm = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    if (!hasFinePerm && !hasCoarsePerm) return@withContext null
+
+                    try {
+                        withTimeout(3500L) {
+                            val last = Tasks.await(fused.lastLocation)
+                            if (last != null) return@withTimeout last
+
+                            val current = Tasks.await(
+                                fused.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                            )
+                            current
+                        }
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+
+                val mapsLink = if (location != null) {
+                    "https://maps.google.com/?q=${location.latitude},${location.longitude}"
+                } else {
+                    ""
+                }
+
+                val msg = buildString {
+                    append("SOS! I need help.")
+                    if (profile.name.isNotBlank()) append("\nName: ${profile.name}")
+                    if (profile.bloodGroup.isNotBlank()) append("\nBlood: ${profile.bloodGroup}")
+                    if (profile.address.isNotBlank()) append("\nAddress: ${profile.address}")
+                    if (mapsLink.isNotBlank()) append("\nLocation: $mapsLink")
+                }
+
+                val smsManager = SmsManager.getDefault()
+
+                var sentAny = false
+                contacts.forEach { c ->
+                    try {
+                        smsManager.sendTextMessage(c.phoneNumber, null, msg, null, null)
+                        sentAny = true
+                    } catch (_: Exception) {
+                        // keep trying other contacts
+                    }
+                }
+
+                if (sentAny) {
+                    Toast.makeText(context, context.getString(R.string.toast_sos_triggered), Toast.LENGTH_SHORT).show()
+                    notificationHelper.showSosDelivered()
+                } else {
+                    Toast.makeText(context, context.getString(R.string.toast_sos_sms_failed), Toast.LENGTH_SHORT).show()
+                    notificationHelper.showSosFailed()
+                }
+            } finally {
+                isSendingSos.value = false
+            }
+        }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -301,6 +381,19 @@ fun EmergencyScreen(
             }
         }
     }
+
+    LaunchedEffect(isNfcActive.value, userId) {
+        if (!isNfcActive.value || userId.isEmpty()) return@LaunchedEffect
+        try {
+            val minted = withContext(Dispatchers.IO) {
+                withTimeout(7000L) { repository.mintEmergencyLink() }
+            }
+            nfcShareUrl.value = minted
+        } catch (_: Exception) {
+            // If mint fails (offline), do not beam a broken URL.
+            nfcShareUrl.value = ""
+        }
+    }
     
     android.util.Log.d("EmergencyScreen", "About to render: isLoading=${isLoading.value}")
     
@@ -359,7 +452,7 @@ fun EmergencyScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Emergency ID",
+                    text = stringResource(R.string.emergency_id),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Light,
                     color = Color.White,
@@ -368,7 +461,7 @@ fun EmergencyScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "For use in medical emergencies",
+                    text = stringResource(R.string.for_medical_emergencies),
                     fontSize = 12.sp,
                     color = Color.White.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
@@ -384,7 +477,7 @@ fun EmergencyScreen(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (isOnline.value) "Online sync" else "Offline mode",
+                        text = if (isOnline.value) stringResource(R.string.online_sync) else stringResource(R.string.offline_mode),
                         fontSize = 10.sp,
                         color = Color.White.copy(alpha = 0.9f),
                         letterSpacing = 0.3.sp
@@ -401,7 +494,7 @@ fun EmergencyScreen(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Language,
-                    contentDescription = "Language",
+                    contentDescription = stringResource(R.string.cd_language),
                     tint = Color.White
                 )
             }
@@ -472,6 +565,64 @@ fun EmergencyScreen(
                     }
                 }
 
+                if (profile.address.isNotBlank()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                                RoundedCornerShape(12.dp)
+                            )
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.address),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            letterSpacing = 0.4.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = profile.address,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = 18.sp
+                        )
+                    }
+                }
+
+                if (profile.allergies.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                                RoundedCornerShape(12.dp)
+                            )
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.allergies),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            letterSpacing = 0.4.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            profile.allergies.forEach { allergy ->
+                                Text(
+                                    text = allergy,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // Medical Conditions
                 Column(
                     modifier = Modifier
@@ -508,7 +659,7 @@ fun EmergencyScreen(
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "INFO",
+                                text = stringResource(R.string.info),
                                 fontSize = 9.sp,
                                 letterSpacing = 1.sp,
                                 color = MaterialTheme.colorScheme.primary,
@@ -628,25 +779,26 @@ fun EmergencyScreen(
                                     fontWeight = FontWeight.Light
                                 )
                             }
+
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 IconButton(onClick = { launchDial(contact.phoneNumber) }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Call,
-                                        contentDescription = "Call",
+                                        contentDescription = stringResource(R.string.cd_call),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                                 IconButton(onClick = { launchSms(contact.phoneNumber) }) {
                                     Icon(
                                         imageVector = Icons.Outlined.Message,
-                                        contentDescription = "SMS",
+                                        contentDescription = stringResource(R.string.cd_sms),
                                         tint = MaterialTheme.colorScheme.secondary
                                     )
                                 }
                                 IconButton(onClick = { copyNumber(contact.phoneNumber) }) {
                                     Icon(
                                         imageVector = Icons.Outlined.ContentCopy,
-                                        contentDescription = "Copy",
+                                        contentDescription = stringResource(R.string.cd_copy),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -719,7 +871,7 @@ fun EmergencyScreen(
                 enabled = !isSendingSos.value
             ) {
                 Text(
-                    text = if (isSendingSos.value) "SENDING SOS..." else "🚨 SEND SOS 🚨",
+                    text = if (isSendingSos.value) stringResource(R.string.sos_sending_short) else stringResource(R.string.sos_send),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     letterSpacing = 0.5.sp,
