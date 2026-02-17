@@ -98,6 +98,11 @@ npm run build
 - `helper-id/node_modules/` appears committed locally; keep it gitignored and out of source control.
 - `local.properties` is machine-specific for Android SDK paths; do not commit personalized values.
 
+  ## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=akyourowngames/HelpID-Android&type=date&legend=top-left)](https://www.star-history.com/#akyourowngames/HelpID-Android&type=date&legend=top-left)
+
 ## License
 
 No license file is currently present in the repository. Add one if this project will be shared publicly.
+
