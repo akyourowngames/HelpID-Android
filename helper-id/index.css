@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.prose h3 {
+  @apply mb-4;
+}
+
+.prose p {
+  @apply text-gray-600;
+}
+
+.prose a {
+  @apply text-brand-yellow hover:text-brand-black;
+}
+
+.prose strong {
+  @apply text-brand-black;
+}
+
+.prose ul > li::before {
+  @apply bg-brand-yellow;
+}

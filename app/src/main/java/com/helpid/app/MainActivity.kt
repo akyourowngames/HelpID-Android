@@ -2,6 +2,7 @@ package com.helpid.app
 
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
@@ -66,6 +67,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (intent?.getBooleanExtra("fullscreen_test", false) == true) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
+                setShowWhenLocked(true)
+                setTurnScreenOn(true)
+            } else {
+                @Suppress("DEPRECATION")
+                window.addFlags(
+                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                )
+            }
+        }
+
         // Restore saved language
         val savedLanguage = LanguageManager.getSelectedLanguage(this)
         LanguageManager.setLanguage(this, savedLanguage)
@@ -76,7 +90,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation()
+                    val startScreen = intent?.getStringExtra("open_screen") ?: "emergency"
+                    AppNavigation(initialScreen = startScreen)
                 }
             }
         }
@@ -110,10 +125,10 @@ private fun InitSkeleton(errorText: String?) {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(initialScreen: String = "emergency") {
     Log.d(TAG, "AppNavigation composable called")
     
-    val currentScreen = remember { mutableStateOf("emergency") }
+    val currentScreen = remember { mutableStateOf(initialScreen) }
     val userId = remember { mutableStateOf("") }
     val isInitialized = remember { mutableStateOf(false) }
     val initError = remember { mutableStateOf<String?>(null) }

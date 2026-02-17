@@ -86,6 +86,8 @@ import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -118,6 +120,8 @@ fun EmergencyScreen(
     val userProfile = remember { mutableStateOf(UserProfile.default(userId)) }
     val isLoading = remember { mutableStateOf(true) }
     val isSendingSos = remember { mutableStateOf(false) }
+    val sosCountdown = remember { mutableStateOf(0) }
+    val sosCountdownJob = remember { mutableStateOf<Job?>(null) }
     val isOnline = remember { mutableStateOf(true) }
     val syncTick = remember { mutableStateOf(0) }
     val nfcShareUrl = remember { mutableStateOf("") }
@@ -179,7 +183,14 @@ fun EmergencyScreen(
         Toast.makeText(context, context.getString(R.string.toast_number_copied), Toast.LENGTH_SHORT).show()
     }
 
-    fun sendSos() {
+    fun hasSosPermissions(): Boolean {
+        val hasSms = ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+        val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        return hasSms && (hasFine || hasCoarse)
+    }
+
+    fun sendSos(isTestMode: Boolean = false) {
         if (isSendingSos.value) return
         isSendingSos.value = true
 
@@ -204,10 +215,7 @@ fun EmergencyScreen(
             }
         }
 
-        val hasSms = ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
-        val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (!hasSms || (!hasFine && !hasCoarse)) {
+        if (!hasSosPermissions()) {
             notificationHelper.showSosFailed()
             isSendingSos.value = false
             return
@@ -245,11 +253,17 @@ fun EmergencyScreen(
                 }
 
                 val msg = buildString {
-                    append("SOS! I need help.")
+                    append(if (isTestMode) "TEST SOS: Please ignore." else "SOS! I need help.")
                     if (profile.name.isNotBlank()) append("\nName: ${profile.name}")
                     if (profile.bloodGroup.isNotBlank()) append("\nBlood: ${profile.bloodGroup}")
                     if (profile.address.isNotBlank()) append("\nAddress: ${profile.address}")
                     if (mapsLink.isNotBlank()) append("\nLocation: $mapsLink")
+                }
+
+                if (isTestMode) {
+                    Toast.makeText(context, "Test SOS ready: permissions and message are valid.", Toast.LENGTH_SHORT).show()
+                    notificationHelper.showSosDelivered()
+                    return@launch
                 }
 
                 val smsManager = SmsManager.getDefault()
@@ -277,6 +291,25 @@ fun EmergencyScreen(
         }
     }
 
+    fun cancelSosCountdown() {
+        sosCountdownJob.value?.cancel()
+        sosCountdownJob.value = null
+        sosCountdown.value = 0
+    }
+
+    fun startSosCountdown() {
+        if (isSendingSos.value || sosCountdown.value > 0) return
+        sosCountdown.value = 5
+        sosCountdownJob.value = scope.launch {
+            while (sosCountdown.value > 0) {
+                delay(1000L)
+                sosCountdown.value -= 1
+            }
+            sendSos()
+            sosCountdownJob.value = null
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = { result ->
@@ -289,7 +322,7 @@ fun EmergencyScreen(
                 true
             }
             if (sms && (fine || coarse)) {
-                sendSos()
+                startSosCountdown()
             } else if (notifications) {
                 notificationHelper.showSosFailed()
             }
@@ -851,15 +884,19 @@ fun EmergencyScreen(
             // SOS Button
             Button(
                 onClick = { 
-                    val permissions = mutableListOf(
-                        Manifest.permission.SEND_SMS,
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    )
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                    if (hasSosPermissions()) {
+                        startSosCountdown()
+                    } else {
+                        val permissions = mutableListOf(
+                            Manifest.permission.SEND_SMS,
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        permissionLauncher.launch(permissions.toTypedArray())
                     }
-                    permissionLauncher.launch(permissions.toTypedArray())
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -868,7 +905,7 @@ fun EmergencyScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error
                 ),
-                enabled = !isSendingSos.value
+                enabled = !isSendingSos.value && sosCountdown.value == 0
             ) {
                 Text(
                     text = if (isSendingSos.value) stringResource(R.string.sos_sending_short) else stringResource(R.string.sos_send),
@@ -876,6 +913,75 @@ fun EmergencyScreen(
                     fontSize = 15.sp,
                     letterSpacing = 0.5.sp,
                     color = MaterialTheme.colorScheme.onError
+                )
+            }
+
+            if (sosCountdown.value > 0) {
+                Text(
+                    text = "SOS sending in ${sosCountdown.value}s",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Button(
+                    onClick = { cancelSosCountdown() },
+                    modifier = Modifier
+                        .fillMaxWidth(0.75f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "Cancel SOS",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+
+            Button(
+                onClick = {
+                    if (hasSosPermissions()) {
+                        sendSos(isTestMode = true)
+                    } else {
+                        Toast.makeText(context, "Grant SOS permissions first, then run Test SOS.", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                ),
+                enabled = !isSendingSos.value && sosCountdown.value == 0
+            ) {
+                Text(
+                    text = "Test SOS (no SMS)",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    letterSpacing = 0.3.sp
+                )
+            }
+
+            Button(
+                onClick = {
+                    notificationHelper.showTestLockScreenQrAlert(userId)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Text(
+                    text = "Test Lock Alert + QR",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    letterSpacing = 0.3.sp
                 )
             }
 

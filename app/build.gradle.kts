@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+
     alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
 }
@@ -13,8 +14,8 @@ android {
         applicationId = "com.helpid.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,11 +25,17 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Reduce APK size + basic hardening
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            // keep debuggable defaults
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -38,6 +45,8 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+
 
     buildFeatures {
         compose = true
@@ -50,6 +59,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
 }
 
 dependencies {

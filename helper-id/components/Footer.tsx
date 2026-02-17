@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { APP_NAME, ROBOT_NAME } from '../constants';
 import { ArrowRight, Twitter, Youtube, Instagram, Disc } from 'lucide-react';
 
@@ -111,7 +112,7 @@ export const Footer: React.FC = () => {
                 <div>
                     <h5 className="font-bold mb-6 text-brand-black">About</h5>
                     <ul className="space-y-4 text-gray-500">
-                        <li><a href="#" className="hover:text-brand-black transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-sm">Mission</a></li>
+                        <li><Link to="/mission" className="hover:text-brand-black transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-sm">Mission</Link></li>
                         <li><a href="#" className="hover:text-brand-black transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-sm">Safety</a></li>
                         <li><a href="#" className="hover:text-brand-black transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-sm">Contact</a></li>
                     </ul>
@@ -144,8 +145,8 @@ export const Footer: React.FC = () => {
                 © 2026 {APP_NAME} Inc
             </div>
             <div className="flex gap-6">
-                <a href="#" className="hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-sm">Terms of Service</a>
-                <a href="#" className="hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-sm">Privacy and Cookies</a>
+                <Link to="/terms-of-service" className="hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-sm">Terms of Service</Link>
+                <Link to="/privacy-and-cookies" className="hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-sm">Privacy and Cookies</Link>
             </div>
         </div>
       </div>

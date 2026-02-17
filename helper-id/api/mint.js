@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 function getAdminApp() {
   if (admin.apps?.length) return admin.app();
@@ -20,8 +21,9 @@ function getJwtSecret() {
 }
 
 function generatePublicKey() {
-  // URL-safe, reasonably short
-  return `HID-${Math.random().toString(36).slice(2, 6).toUpperCase()}${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  // URL-safe, crypto-secure
+  const b = crypto.randomBytes(8).toString('base64url').toUpperCase();
+  return `HID-${b}`;
 }
 
 export default async function handler(req, res) {
@@ -75,6 +77,7 @@ export default async function handler(req, res) {
     const origin = `${proto}://${host}`;
 
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-store');
     res.statusCode = 200;
     res.end(
       JSON.stringify({

@@ -10,10 +10,9 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
       },
       plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
+      // SECURITY: do NOT expose server secrets to the browser bundle.
+      // If you need Gemini/OpenAI/etc, call via /api/* where secrets stay on Vercel.
+      define: {},
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

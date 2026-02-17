@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import React from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Home } from './components/Home';
 import { ProductPage } from './components/ProductPage';
@@ -7,26 +7,36 @@ import { About } from './components/About';
 import { Footer } from './components/Footer';
 import { StickyCTA } from './components/StickyCTA';
 import { EmergencyProfilePage } from './components/EmergencyProfilePage';
+import { TermsOfService } from './components/TermsOfService';
+
+import { PrivacyAndCookies } from './components/PrivacyAndCookies';
+
+import { Mission } from './components/Mission';
 
 const MarketingSite: React.FC = () => {
-  const [view, setView] = useState<'home' | 'product' | 'about'>('home');
+  const location = useLocation();
+  const showStickyCTA = location.pathname !== '/product';
 
   return (
     <div className="min-h-screen bg-brand-bg font-sans text-brand-black selection:bg-brand-yellow selection:text-brand-black flex flex-col">
-      <Navbar onNavigate={setView} activePage={view} />
-
+      <Navbar />
       <main className="flex-grow">
-        {view === 'home' && <Home />}
-        {view === 'product' && <ProductPage />}
-        {view === 'about' && <About />}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/product" element={<ProductPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/privacy-and-cookies" element={<PrivacyAndCookies />} />
+          <Route path="/mission" element={<Mission />} />
+        </Routes>
       </main>
-
       <Footer />
-      {view !== 'product' && (
+      {showStickyCTA && (
         <StickyCTA
           onClick={() => {
-            setView('product');
-            window.scrollTo(0, 0);
+            // This is a bit of a hack, we should ideally use react-router-dom's navigation
+            // but for now, this will work.
+            window.location.href = '/product';
           }}
         />
       )}
@@ -38,7 +48,7 @@ const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/e/:publicKey" element={<EmergencyProfilePage />} />
-      <Route path="/" element={<MarketingSite />} />
+      <Route path="/*" element={<MarketingSite />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
