@@ -87,6 +87,8 @@ dependencies {
 
     // Location
     implementation(libs.play.services.location)
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Room
     implementation(libs.androidx.room.runtime)

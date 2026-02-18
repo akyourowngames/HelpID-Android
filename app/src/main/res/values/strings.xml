@@ -56,7 +56,15 @@
     <string name="emergency_access">Emergency Access</string>
     <string name="scan_to_view">Scan to view emergency information</string>
     <string name="scan_this_code">Scan this code to access emergency information</string>
+    <string name="qr_nfc_title">Tap-to-Assist (NFC)</string>
+    <string name="qr_nfc_subtitle">Tap phones together to open this profile.</string>
+    <string name="qr_nfc_active">NFC ACTIVE</string>
+    <string name="qr_nfc_enable">ENABLE NFC</string>
+    <string name="qr_nfc_unavailable">NFC unavailable on this device</string>
+    <string name="qr_content_description">Emergency QR Code</string>
+    <string name="qr_mint_error">Unable to generate secure link. Check internet and try again.</string>
     <string name="share_qr_code">Share QR Code</string>
+    <string name="retry">RETRY</string>
     <string name="back">BACK</string>
     
     <!-- Share & Export -->
@@ -77,4 +85,7 @@
     <string name="language_hindi">हिंदी</string>
     <string name="language_french">Français</string>
     <string name="language_german">Deutsch</string>
+    <string name="bottom_nav_id">ID</string>
+    <string name="bottom_nav_qr">QR</string>
+    <string name="bottom_nav_profile">Profile</string>
 </resources>

@@ -9,9 +9,12 @@ import com.google.gson.Gson
 import com.helpid.app.data.local.AppDatabase
 import com.helpid.app.data.local.LocalEmergencyContact
 import com.helpid.app.data.local.LocalUserProfile
+import com.helpid.app.utils.SecurePrefs
+import com.helpid.app.utils.SensitiveDataCipher
 import java.net.HttpURLConnection
 import java.net.URL
 import java.io.OutputStreamWriter
+import java.net.URI
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,7 +24,13 @@ class FirebaseRepository(context: Context? = null) {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
     private val localDb = context?.let { AppDatabase.getDatabase(it) }
-    private val sharedPrefs = context?.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+    private val sharedPrefs = context?.let { SecurePrefs.create(it.applicationContext, "app_settings_secure") }
+    private val legacyPrefs = context?.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+    private val cipher = try {
+        SensitiveDataCipher()
+    } catch (_: Exception) {
+        null
+    }
     private val gson = Gson()
     private var demoMode = false
     private var currentUserId = ""
@@ -29,6 +38,11 @@ class FirebaseRepository(context: Context? = null) {
     private val pendingProfileKey = "pending_profile"
     private val publicKeyKey = "public_profile_key"
     private val webBaseUrlKey = "web_base_url"
+    private val prefsMigratedKey = "prefs_migrated_secure"
+
+    init {
+        migrateLegacyPrefsIfNeeded()
+    }
 
     private data class MintResponse(
         val publicKey: String? = null,
@@ -36,16 +50,47 @@ class FirebaseRepository(context: Context? = null) {
         val url: String? = null
     )
 
+    private fun migrateLegacyPrefsIfNeeded() {
+        val secure = sharedPrefs ?: return
+        val legacy = legacyPrefs ?: return
+        if (secure.getBoolean(prefsMigratedKey, false)) return
+
+        val editor = secure.edit()
+        val keys = listOf(lastUserIdKey, pendingProfileKey, publicKeyKey, webBaseUrlKey)
+        keys.forEach { key ->
+            val value = legacy.getString(key, null)
+            if (!value.isNullOrBlank()) {
+                editor.putString(key, value)
+            }
+        }
+        editor.putBoolean(prefsMigratedKey, true).apply()
+    }
+
     private fun mapLocalToDomain(local: LocalUserProfile): UserProfile {
+        fun decryptOrPlain(value: String): String {
+            return try {
+                if (value.startsWith("enc::")) {
+                    cipher?.decryptOrNull(value) ?: ""
+                } else {
+                    value
+                }
+            } catch (_: Exception) {
+                if (value.startsWith("enc::")) "" else value
+            }
+        }
+
         return UserProfile(
             userId = local.userId,
-            name = local.name,
-            bloodGroup = local.bloodGroup,
-            address = local.address,
-            allergies = local.allergies,
-            medicalNotes = local.medicalNotes,
+            name = decryptOrPlain(local.name),
+            bloodGroup = decryptOrPlain(local.bloodGroup),
+            address = decryptOrPlain(local.address),
+            allergies = local.allergies.map { decryptOrPlain(it) },
+            medicalNotes = local.medicalNotes.map { decryptOrPlain(it) },
             emergencyContacts = local.emergencyContacts.map {
-                EmergencyContactData(name = it.name, phone = it.phone)
+                EmergencyContactData(
+                    name = decryptOrPlain(it.name),
+                    phone = decryptOrPlain(it.phone)
+                )
             },
             language = local.language,
             lastUpdated = local.lastUpdated
@@ -53,15 +98,27 @@ class FirebaseRepository(context: Context? = null) {
     }
 
     private fun mapDomainToLocal(profile: UserProfile): LocalUserProfile {
+        fun encryptOrPlain(value: String): String {
+            if (value.isBlank()) return value
+            return try {
+                cipher?.encrypt(value) ?: value
+            } catch (_: Exception) {
+                value
+            }
+        }
+
         return LocalUserProfile(
             userId = profile.userId,
-            name = profile.name,
-            bloodGroup = profile.bloodGroup,
-            address = profile.address,
-            allergies = profile.allergies,
-            medicalNotes = profile.medicalNotes,
+            name = encryptOrPlain(profile.name),
+            bloodGroup = encryptOrPlain(profile.bloodGroup),
+            address = encryptOrPlain(profile.address),
+            allergies = profile.allergies.map { encryptOrPlain(it) },
+            medicalNotes = profile.medicalNotes.map { encryptOrPlain(it) },
             emergencyContacts = profile.emergencyContacts.map {
-                LocalEmergencyContact(name = it.name, phone = it.phone)
+                LocalEmergencyContact(
+                    name = encryptOrPlain(it.name),
+                    phone = encryptOrPlain(it.phone)
+                )
             },
             language = profile.language,
             lastUpdated = profile.lastUpdated
@@ -275,8 +332,9 @@ class FirebaseRepository(context: Context? = null) {
 
         if (idToken.isEmpty()) return ""
 
-        val baseUrl = sharedPrefs?.getString(webBaseUrlKey, null)?.takeIf { it.isNotBlank() }
-            ?: "https://helper-id.vercel.app"
+        val baseUrl = sanitizeBaseUrl(
+            sharedPrefs?.getString(webBaseUrlKey, null)
+        ) ?: "https://helper-id.vercel.app"
 
         val cachedPublicKey = sharedPrefs?.getString(publicKeyKey, "").orEmpty().trim()
 
@@ -293,7 +351,7 @@ class FirebaseRepository(context: Context? = null) {
                 }
 
                 val body = if (cachedPublicKey.isNotEmpty()) {
-                    "{\"publicKey\":\"$cachedPublicKey\"}"
+                    gson.toJson(mapOf("publicKey" to cachedPublicKey))
                 } else {
                     "{}"
                 }
@@ -329,4 +387,21 @@ class FirebaseRepository(context: Context? = null) {
     }
 
     fun isDemoMode(): Boolean = demoMode
+
+    private fun sanitizeBaseUrl(raw: String?): String? {
+        val v = raw?.trim().orEmpty()
+        if (v.isBlank()) return null
+        return try {
+            val uri = URI(v)
+            val scheme = uri.scheme?.lowercase() ?: return null
+            if (scheme != "https") return null
+            val host = uri.host?.lowercase() ?: return null
+            if (host.isBlank()) return null
+            val isAllowedHost = host == "helper-id.vercel.app" || host.endsWith(".helper-id.vercel.app")
+            if (!isAllowedHost) return null
+            "https://$host"
+        } catch (_: Exception) {
+            null
+        }
+    }
 }

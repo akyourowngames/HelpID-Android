@@ -79,7 +79,9 @@ import com.helpid.app.R
 import com.helpid.app.data.FirebaseRepository
 import com.helpid.app.data.UserProfile
 import com.helpid.app.ui.theme.HelpIDTheme
+import com.helpid.app.utils.EmergencyNumberResolver
 import com.helpid.app.utils.NotificationHelper
+import com.helpid.app.work.SosFollowUpWorker
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.Tasks
@@ -95,8 +97,13 @@ import com.helpid.app.ui.components.ShimmerPlaceholder
 import com.helpid.app.ui.components.SkeletonSpacer
 import com.helpid.app.ui.components.SkeletonTextLine
 import androidx.core.content.ContextCompat
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import kotlinx.coroutines.withTimeout
 import androidx.compose.runtime.rememberCoroutineScope
+import java.util.concurrent.TimeUnit
 
 data class EmergencyContact(
     val name: String,
@@ -122,9 +129,22 @@ fun EmergencyScreen(
     val isSendingSos = remember { mutableStateOf(false) }
     val sosCountdown = remember { mutableStateOf(0) }
     val sosCountdownJob = remember { mutableStateOf<Job?>(null) }
+    val escalationCountdown = remember { mutableStateOf(0) }
+    val escalationCountdownJob = remember { mutableStateOf<Job?>(null) }
     val isOnline = remember { mutableStateOf(true) }
     val syncTick = remember { mutableStateOf(0) }
     val nfcShareUrl = remember { mutableStateOf("") }
+    val failedSosContacts = remember { mutableStateOf<List<EmergencyContact>>(emptyList()) }
+    val fallbackSosMessage = remember { mutableStateOf("") }
+    val followUpActive = remember { mutableStateOf(false) }
+    val emergencyNumber = remember { EmergencyNumberResolver.resolve(context) }
+
+    LaunchedEffect(Unit) {
+        val infos = withContext(Dispatchers.IO) {
+            WorkManager.getInstance(context).getWorkInfosForUniqueWork(SosFollowUpWorker.WORK_NAME).get()
+        }
+        followUpActive.value = infos.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING }
+    }
 
     fun launchDial(number: String) {
         val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -190,9 +210,92 @@ fun EmergencyScreen(
         return hasSms && (hasFine || hasCoarse)
     }
 
+    fun isProfileReadyForSos(profile: UserProfile): Boolean {
+        val hasName = profile.name.trim().isNotEmpty()
+        val hasBloodGroup = profile.bloodGroup.trim().isNotEmpty()
+        val validContacts = profile.emergencyContacts.filter { it.phone.isNotBlank() && it.name.isNotBlank() }
+        if (!hasName || !hasBloodGroup || validContacts.isEmpty()) return false
+
+        val defaults = UserProfile.default(profile.userId)
+        val unchangedDefaults = profile.name.trim().equals(defaults.name, ignoreCase = true) &&
+            profile.bloodGroup.trim().equals(defaults.bloodGroup, ignoreCase = true) &&
+            profile.emergencyContacts == defaults.emergencyContacts
+        return !unchangedDefaults
+    }
+
+    fun shareSosFallback(message: String, failed: List<EmergencyContact>) {
+        val text = buildString {
+            append(message)
+            if (failed.isNotEmpty()) {
+                append("\n\nFailed contacts:")
+                failed.forEach { append("\n- ${it.name}: ${it.phoneNumber}") }
+            }
+        }
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        try {
+            context.startActivity(Intent.createChooser(shareIntent, "Share SOS via another app"))
+        } catch (_: Exception) {
+        }
+    }
+
+    fun stopFollowUpUpdates(showToast: Boolean = false) {
+        WorkManager.getInstance(context).cancelUniqueWork(SosFollowUpWorker.WORK_NAME)
+        followUpActive.value = false
+        if (showToast) {
+            Toast.makeText(context, "Live SOS follow-ups stopped.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun cancelAutoEscalation(showToast: Boolean = false) {
+        escalationCountdownJob.value?.cancel()
+        escalationCountdownJob.value = null
+        escalationCountdown.value = 0
+        if (showToast) {
+            Toast.makeText(context, "Auto emergency call canceled.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun startAutoEscalationCall() {
+        if (escalationCountdown.value > 0) return
+        escalationCountdown.value = 30
+        escalationCountdownJob.value = scope.launch {
+            while (escalationCountdown.value > 0) {
+                delay(1000L)
+                escalationCountdown.value -= 1
+            }
+            cancelAutoEscalation()
+            launchDial(emergencyNumber)
+        }
+    }
+
+    fun scheduleFollowUpUpdates(profile: UserProfile, contacts: List<EmergencyContact>) {
+        val phones = contacts.map { it.phoneNumber }.filter { it.isNotBlank() }.distinct()
+        if (phones.isEmpty()) return
+
+        val request = OneTimeWorkRequestBuilder<SosFollowUpWorker>()
+            .setInitialDelay(SosFollowUpWorker.DEFAULT_INTERVAL_MINUTES.toLong(), TimeUnit.MINUTES)
+            .setInputData(
+                SosFollowUpWorker.inputDataOf(
+                    phones = phones.toTypedArray(),
+                    userName = profile.name,
+                    bloodGroup = profile.bloodGroup
+                )
+            )
+            .build()
+
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork(SosFollowUpWorker.WORK_NAME, ExistingWorkPolicy.REPLACE, request)
+        followUpActive.value = true
+    }
+
     fun sendSos(isTestMode: Boolean = false) {
         if (isSendingSos.value) return
         isSendingSos.value = true
+        failedSosContacts.value = emptyList()
+        fallbackSosMessage.value = ""
 
         val contacts = userProfile.value.emergencyContacts
             .map { EmergencyContact(name = it.name, phoneNumber = it.phone) }
@@ -224,6 +327,15 @@ fun EmergencyScreen(
         scope.launch {
             try {
                 val profile = userProfile.value
+                if (!isTestMode && !isProfileReadyForSos(profile)) {
+                    Toast.makeText(
+                        context,
+                        "Complete your profile and real emergency contacts before SOS.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    notificationHelper.showSosFailed()
+                    return@launch
+                }
 
                 val location: Location? = withContext(Dispatchers.IO) {
                     val fused = LocationServices.getFusedLocationProviderClient(context)
@@ -267,20 +379,55 @@ fun EmergencyScreen(
                 }
 
                 val smsManager = SmsManager.getDefault()
+                val failed = mutableListOf<EmergencyContact>()
+                var sentCount = 0
 
-                var sentAny = false
                 contacts.forEach { c ->
-                    try {
-                        smsManager.sendTextMessage(c.phoneNumber, null, msg, null, null)
-                        sentAny = true
-                    } catch (_: Exception) {
-                        // keep trying other contacts
+                    var sent = false
+                    for (attempt in 0 until 2) {
+                        if (sent) break
+                        try {
+                            smsManager.sendTextMessage(c.phoneNumber, null, msg, null, null)
+                            sent = true
+                            sentCount += 1
+                        } catch (_: Exception) {
+                            if (attempt == 0) {
+                                delay(350L)
+                            }
+                        }
                     }
+                    if (!sent) failed.add(c)
                 }
 
-                if (sentAny) {
+                if (failed.isNotEmpty()) {
+                    val link = withContext(Dispatchers.IO) {
+                        try {
+                            withTimeout(4000L) { repository.mintEmergencyLink() }
+                        } catch (_: Exception) {
+                            ""
+                        }
+                    }
+                    fallbackSosMessage.value = buildString {
+                        append(msg)
+                        if (link.isNotBlank()) {
+                            append("\nProfile Link: $link")
+                        }
+                    }
+                    failedSosContacts.value = failed.toList()
+                }
+
+                if (sentCount > 0) {
                     Toast.makeText(context, context.getString(R.string.toast_sos_triggered), Toast.LENGTH_SHORT).show()
                     notificationHelper.showSosDelivered()
+                    scheduleFollowUpUpdates(profile, contacts)
+                    startAutoEscalationCall()
+                    if (failed.isNotEmpty()) {
+                        Toast.makeText(
+                            context,
+                            "Some contacts failed. Use fallback share below.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 } else {
                     Toast.makeText(context, context.getString(R.string.toast_sos_sms_failed), Toast.LENGTH_SHORT).show()
                     notificationHelper.showSosFailed()
@@ -348,10 +495,15 @@ fun EmergencyScreen(
             connectivityManager.registerNetworkCallback(request, callback)
 
             onDispose {
+                sosCountdownJob.value?.cancel()
+                escalationCountdownJob.value?.cancel()
                 connectivityManager.unregisterNetworkCallback(callback)
             }
         } else {
-            onDispose { }
+            onDispose {
+                sosCountdownJob.value?.cancel()
+                escalationCountdownJob.value?.cancel()
+            }
         }
     }
     
@@ -857,7 +1009,7 @@ fun EmergencyScreen(
             Button(
                 onClick = {
                     val intent = Intent(Intent.ACTION_DIAL).apply {
-                        data = Uri.parse("tel:112")
+                        data = Uri.parse("tel:$emergencyNumber")
                     }
                     try {
                         context.startActivity(intent)
@@ -874,7 +1026,7 @@ fun EmergencyScreen(
                 )
             ) {
                 Text(
-                    text = stringResource(R.string.call_emergency),
+                    text = "CALL EMERGENCY - $emergencyNumber",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
                     letterSpacing = 0.5.sp
@@ -940,49 +1092,71 @@ fun EmergencyScreen(
                 }
             }
 
-            Button(
-                onClick = {
-                    if (hasSosPermissions()) {
-                        sendSos(isTestMode = true)
-                    } else {
-                        Toast.makeText(context, "Grant SOS permissions first, then run Test SOS.", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                ),
-                enabled = !isSendingSos.value && sosCountdown.value == 0
-            ) {
+            if (escalationCountdown.value > 0) {
                 Text(
-                    text = "Test SOS (no SMS)",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    letterSpacing = 0.3.sp
+                    text = "Auto-calling $emergencyNumber in ${escalationCountdown.value}s",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Button(
+                    onClick = { cancelAutoEscalation(showToast = true) },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "Cancel Auto Call",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp
+                    )
+                }
             }
 
-            Button(
-                onClick = {
-                    notificationHelper.showTestLockScreenQrAlert(userId)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary
-                )
-            ) {
-                Text(
-                    text = "Test Lock Alert + QR",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    letterSpacing = 0.3.sp
-                )
+            if (failedSosContacts.value.isNotEmpty() && fallbackSosMessage.value.isNotBlank()) {
+                Button(
+                    onClick = {
+                        shareSosFallback(
+                            message = fallbackSosMessage.value,
+                            failed = failedSosContacts.value
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "Fallback Share SOS",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+
+            if (followUpActive.value) {
+                Button(
+                    onClick = { stopFollowUpUpdates(showToast = true) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    )
+                ) {
+                    Text(
+                        text = "Stop Live Location Follow-ups",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp
+                    )
+                }
             }
 
         }

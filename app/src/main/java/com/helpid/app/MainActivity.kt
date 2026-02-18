@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.helpid.app.data.FirebaseRepository
@@ -64,25 +65,29 @@ import kotlinx.coroutines.withTimeout
 private const val TAG = "HelpID"
 
 class MainActivity : ComponentActivity() {
+    private fun applyLockScreenFlagsIfNeeded() {
+        val isFullscreenTest = intent?.getBooleanExtra("fullscreen_test", false) == true
+        if (!isFullscreenTest) return
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+    }
+
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LanguageManager.applySavedLanguage(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (intent?.getBooleanExtra("fullscreen_test", false) == true) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
-                setShowWhenLocked(true)
-                setTurnScreenOn(true)
-            } else {
-                @Suppress("DEPRECATION")
-                window.addFlags(
-                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                )
-            }
-        }
-
-        // Restore saved language
-        val savedLanguage = LanguageManager.getSelectedLanguage(this)
-        LanguageManager.setLanguage(this, savedLanguage)
+        applyLockScreenFlagsIfNeeded()
 
         setContent {
             HelpIDTheme {
@@ -94,6 +99,14 @@ class MainActivity : ComponentActivity() {
                     AppNavigation(initialScreen = startScreen)
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent?) {
+        super.onNewIntent(intent)
+        if (intent != null) {
+            setIntent(intent)
+            applyLockScreenFlagsIfNeeded()
         }
     }
 }
@@ -268,7 +281,7 @@ private fun HelpIdBottomBar(
         ) {
             BottomItem(
                 isSelected = currentRoute == "emergency",
-                label = "ID",
+                label = stringResource(R.string.bottom_nav_id),
                 icon = Icons.Outlined.Home,
                 activeColor = active,
                 inactiveColor = inactive,
@@ -277,7 +290,7 @@ private fun HelpIdBottomBar(
             )
             BottomItem(
                 isSelected = currentRoute == "qr",
-                label = "QR",
+                label = stringResource(R.string.bottom_nav_qr),
                 icon = Icons.Outlined.QrCode,
                 activeColor = active,
                 inactiveColor = inactive,
@@ -286,7 +299,7 @@ private fun HelpIdBottomBar(
             )
             BottomItem(
                 isSelected = currentRoute == "edit",
-                label = "Profile",
+                label = stringResource(R.string.bottom_nav_profile),
                 icon = Icons.Outlined.Person,
                 activeColor = active,
                 inactiveColor = inactive,

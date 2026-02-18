@@ -77,4 +77,17 @@
     <string name="language_hindi">हिंदी</string>
     <string name="language_french">Français</string>
     <string name="language_german">Deutsch</string>
+    <string name="qr_nfc_title">Toque para ayudar (NFC)</string>
+    <string name="qr_nfc_subtitle">Junta dos telefonos para abrir este perfil.</string>
+    <string name="qr_nfc_active">NFC ACTIVO</string>
+    <string name="qr_nfc_enable">ACTIVAR NFC</string>
+    <string name="qr_nfc_unavailable">NFC no disponible en este dispositivo</string>
+    <string name="qr_content_description">Codigo QR de emergencia</string>
+    <string name="qr_mint_error">No se pudo generar el enlace seguro. Revisa internet e intentalo otra vez.</string>
+    <string name="retry">REINTENTAR</string>
+    <string name="bottom_nav_id">ID</string>
+    <string name="bottom_nav_qr">QR</string>
+    <string name="bottom_nav_profile">Perfil</string>
 </resources>
+
+

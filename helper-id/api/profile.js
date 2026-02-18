@@ -1,6 +1,8 @@
 import admin from 'firebase-admin';
 import jwt from 'jsonwebtoken';
 
+const PUBLIC_KEY_REGEX = /^HID-[A-Z0-9_-]{8,64}$/;
+
 function getAdminApp() {
   if (admin.apps?.length) return admin.app();
 
@@ -21,6 +23,17 @@ function getJwtSecret() {
 
 function pickString(val) {
   return typeof val === 'string' ? val : '';
+}
+
+function setJson(res) {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+}
+
+function isValidPublicKey(key) {
+  return PUBLIC_KEY_REGEX.test(key);
 }
 
 function sanitizeProfile(raw) {
@@ -79,6 +92,7 @@ export default async function handler(req, res) {
     if (req.method !== 'GET') {
       res.statusCode = 405;
       res.setHeader('Allow', 'GET');
+      setJson(res);
       res.end(JSON.stringify({ error: 'Method not allowed' }));
       return;
     }
@@ -88,21 +102,31 @@ export default async function handler(req, res) {
 
     if (!key || !token) {
       res.statusCode = 400;
+      setJson(res);
       res.end(JSON.stringify({ error: 'Missing key or token' }));
+      return;
+    }
+
+    if (!isValidPublicKey(key) || token.length > 4096) {
+      res.statusCode = 400;
+      setJson(res);
+      res.end(JSON.stringify({ error: 'Invalid request' }));
       return;
     }
 
     let payload;
     try {
-      payload = jwt.verify(token, getJwtSecret());
+      payload = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
     } catch {
       res.statusCode = 401;
+      setJson(res);
       res.end(JSON.stringify({ error: 'Invalid or expired token' }));
       return;
     }
 
     if (!payload || payload.k !== key) {
       res.statusCode = 401;
+      setJson(res);
       res.end(JSON.stringify({ error: 'Token does not match key' }));
       return;
     }
@@ -116,6 +140,7 @@ export default async function handler(req, res) {
     const uid = mapping?.uid;
     if (!uid) {
       res.statusCode = 404;
+      setJson(res);
       res.end(JSON.stringify({ error: 'Unknown key' }));
       return;
     }
@@ -125,17 +150,17 @@ export default async function handler(req, res) {
     const rawProfile = profileDoc.data();
     if (!rawProfile) {
       res.statusCode = 404;
+      setJson(res);
       res.end(JSON.stringify({ error: 'Profile not found' }));
       return;
     }
 
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Cache-Control', 'no-store');
+    setJson(res);
     res.statusCode = 200;
     res.end(JSON.stringify({ key, profile: sanitizeProfile(rawProfile) }));
   } catch (e) {
     console.error('profile handler failed', e);
-    res.setHeader('Content-Type', 'application/json');
+    setJson(res);
     res.statusCode = 500;
     res.end(JSON.stringify({ error: 'Internal error' }));
   }

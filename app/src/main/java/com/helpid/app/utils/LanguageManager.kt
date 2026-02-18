@@ -2,6 +2,8 @@ package com.helpid.app.utils
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
+import android.os.LocaleList
 import java.util.Locale
 
 object LanguageManager {
@@ -9,22 +11,23 @@ object LanguageManager {
     
     enum class Language(val code: String, val displayName: String) {
         ENGLISH("en", "English"),
-        SPANISH("es", "Español"),
-        HINDI("hi", "हिंदी"),
-        FRENCH("fr", "Français"),
+        SPANISH("es", "Espanol"),
+        HINDI("hi", "Hindi"),
+        FRENCH("fr", "Francais"),
         GERMAN("de", "Deutsch")
     }
     
     fun setLanguage(context: Context, language: Language) {
         val sharedPref = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         sharedPref.edit().putString(LANGUAGE_PREF, language.code).apply()
-        
-        val locale = Locale(language.code)
-        Locale.setDefault(locale)
-        
-        val config = Configuration()
-        config.locale = locale
-        context.resources.updateConfiguration(config, context.resources.displayMetrics)
+        applyLocaleToRuntime(language.code)
+        updateResources(context, language.code)
+    }
+
+    fun applySavedLanguage(context: Context): Context {
+        val selected = getSelectedLanguage(context)
+        applyLocaleToRuntime(selected.code)
+        return updateResources(context, selected.code)
     }
     
     fun getSelectedLanguage(context: Context): Language {
@@ -40,4 +43,21 @@ object LanguageManager {
     fun getAvailableLanguages(): List<Language> {
         return Language.values().toList()
     }
+
+    private fun applyLocaleToRuntime(languageCode: String) {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            LocaleList.setDefault(LocaleList(locale))
+        }
+    }
+
+    private fun updateResources(context: Context, languageCode: String): Context {
+        val locale = Locale(languageCode)
+        val configuration = Configuration(context.resources.configuration)
+        configuration.setLocale(locale)
+        configuration.setLayoutDirection(locale)
+        return context.createConfigurationContext(configuration)
+    }
 }
+

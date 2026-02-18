@@ -77,4 +77,17 @@
     <string name="language_hindi">हिंदी</string>
     <string name="language_french">Français</string>
     <string name="language_german">Deutsch</string>
+    <string name="qr_nfc_title">Tap-to-Assist (NFC)</string>
+    <string name="qr_nfc_subtitle">Halte zwei Telefone zusammen, um dieses Profil zu offnen.</string>
+    <string name="qr_nfc_active">NFC AKTIV</string>
+    <string name="qr_nfc_enable">NFC AKTIVIEREN</string>
+    <string name="qr_nfc_unavailable">NFC auf diesem Gerat nicht verfugbar</string>
+    <string name="qr_content_description">Notfall-QR-Code</string>
+    <string name="qr_mint_error">Sicherer Link konnte nicht erstellt werden. Internet prufen und erneut versuchen.</string>
+    <string name="retry">ERNEUT</string>
+    <string name="bottom_nav_id">ID</string>
+    <string name="bottom_nav_qr">QR</string>
+    <string name="bottom_nav_profile">Profil</string>
 </resources>
+
+

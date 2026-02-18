@@ -77,4 +77,17 @@
     <string name="language_hindi">हिंदी</string>
     <string name="language_french">Français</string>
     <string name="language_german">Deutsch</string>
+    <string name="qr_nfc_title">Tap-to-Assist (NFC)</string>
+    <string name="qr_nfc_subtitle">Approchez deux telephones pour ouvrir ce profil.</string>
+    <string name="qr_nfc_active">NFC ACTIF</string>
+    <string name="qr_nfc_enable">ACTIVER NFC</string>
+    <string name="qr_nfc_unavailable">NFC indisponible sur cet appareil</string>
+    <string name="qr_content_description">Code QR d\'urgence</string>
+    <string name="qr_mint_error">Impossible de generer un lien securise. Verifiez internet puis reessayez.</string>
+    <string name="retry">REESSAYER</string>
+    <string name="bottom_nav_id">ID</string>
+    <string name="bottom_nav_qr">QR</string>
+    <string name="bottom_nav_profile">Profil</string>
 </resources>
+
+

@@ -122,7 +122,7 @@ fun QRScreen(
 
         val minted = repository.mintEmergencyLink()
         if (minted.isBlank()) {
-            mintError.value = "Unable to generate secure link. Check internet and try again."
+            mintError.value = context.getString(R.string.qr_mint_error)
             qrContentState.value = ""
             qrBitmap.value = null
             isMinting.value = false
@@ -169,14 +169,14 @@ fun QRScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Tap-to-Assist (NFC)",
+                    text = stringResource(R.string.qr_nfc_title),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Tap phones together to open this profile.",
+                    text = stringResource(R.string.qr_nfc_subtitle),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -195,14 +195,18 @@ fun QRScreen(
                         )
                     ) {
                         Text(
-                            text = if (isNfcActive.value) "NFC ACTIVE" else "ENABLE NFC",
+                            text = if (isNfcActive.value) {
+                                stringResource(R.string.qr_nfc_active)
+                            } else {
+                                stringResource(R.string.qr_nfc_enable)
+                            },
                             fontSize = 11.sp,
                             letterSpacing = 0.6.sp
                         )
                     }
                 } else {
                     Text(
-                        text = "NFC unavailable on this device",
+                        text = stringResource(R.string.qr_nfc_unavailable),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -235,7 +239,7 @@ fun QRScreen(
             } else {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Emergency QR Code",
+                    contentDescription = stringResource(R.string.qr_content_description),
                     modifier = Modifier.size(260.dp),
                     contentScale = ContentScale.Fit
                 )
@@ -267,7 +271,7 @@ fun QRScreen(
                     .fillMaxWidth(0.6f),
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Text(text = "RETRY", fontSize = 12.sp, letterSpacing = 0.6.sp)
+                Text(text = stringResource(R.string.retry), fontSize = 12.sp, letterSpacing = 0.6.sp)
             }
         }
 

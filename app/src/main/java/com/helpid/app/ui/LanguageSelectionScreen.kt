@@ -1,11 +1,6 @@
 package com.helpid.app.ui
 
 import android.app.Activity
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,29 +14,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.helpid.app.R
@@ -62,14 +47,7 @@ fun LanguageSelectionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.surface,
-                        MaterialTheme.colorScheme.background
-                    )
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -82,30 +60,18 @@ fun LanguageSelectionScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Language Selection Card
-        Card(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp)),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .animateContentSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                languages.forEach { language ->
-                    LanguageOption(
-                        language = language,
-                        isSelected = selectedLanguage.value == language,
-                        onSelect = { selectedLanguage.value = language }
-                    )
-                }
+            languages.forEach { language ->
+                LanguageOption(
+                    language = language,
+                    isSelected = selectedLanguage.value == language,
+                    onSelect = { selectedLanguage.value = language }
+                )
             }
         }
 
@@ -150,68 +116,37 @@ fun LanguageOption(
     isSelected: Boolean,
     onSelect: () -> Unit
 ) {
-    val targetScale = if (isSelected) 1f else 0.98f
-    val scale by animateFloatAsState(targetScale, label = "languageScale")
-    val backgroundColor by animateColorAsState(
-        if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-        label = "languageBackground"
-    )
-    val contentColor by animateColorAsState(
-        if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-        label = "languageContent"
-    )
-    val elevation by animateDpAsState(if (isSelected) 4.dp else 0.dp, label = "languageElevation")
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    val contentColor = if (isSelected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .graphicsLayer(scaleX = scale, scaleY = scale)
             .clickable(onClick = onSelect)
             .background(
                 color = backgroundColor,
                 shape = RoundedCornerShape(12.dp)
             )
-            .shadow(elevation = elevation, shape = RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = languageEmoji(language),
-                fontSize = 18.sp
-            )
-            Column {
-                Text(
-                    text = language.displayName,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = contentColor
-                )
-                AnimatedVisibility(visible = isSelected) {
-                    AssistChip(
-                        onClick = onSelect,
-                        label = {
-                            Text(
-                                text = stringResource(R.string.selected),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            labelColor = MaterialTheme.colorScheme.primary
-                        ),
-                        border = AssistChipDefaults.assistChipBorder()
-                    )
-                }
-            }
-        }
+        Text(
+            text = language.displayName,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = contentColor,
+            modifier = Modifier.weight(1f)
+        )
         RadioButton(
             selected = isSelected,
             onClick = onSelect,
@@ -223,12 +158,3 @@ fun LanguageOption(
     }
 }
 
-private fun languageEmoji(language: LanguageManager.Language): String {
-    return when (language) {
-        LanguageManager.Language.ENGLISH -> "🇺🇸"
-        LanguageManager.Language.SPANISH -> "🇪🇸"
-        LanguageManager.Language.HINDI -> "🇮🇳"
-        LanguageManager.Language.FRENCH -> "🇫🇷"
-        LanguageManager.Language.GERMAN -> "🇩🇪"
-    }
-}
