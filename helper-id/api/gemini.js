@@ -48,8 +48,9 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     res.end(JSON.stringify({ ok: r.ok, data }));
   } catch (e) {
+    console.error('gemini handler failed', e);
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: e?.message || 'Internal error' }));
+    res.end(JSON.stringify({ error: 'Internal error' }));
   }
 }

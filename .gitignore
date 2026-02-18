@@ -3,3 +3,26 @@
 
 # Ignore Gradle build output directory
 build
+
+# Android local/machine-specific files
+local.properties
+app/google-services.json
+*.keystore
+*.jks
+
+# Android app outputs
+app/build/
+
+# Node/Web artifacts
+helper-id/node_modules/
+helper-id/dist/
+helper-id/.vercel/
+helper-id/.env
+helper-id/.env.*
+
+# IDE/system
+.idea/
+.vscode/
+*.iml
+Thumbs.db
+.DS_Store

@@ -134,8 +134,9 @@ export default async function handler(req, res) {
     res.statusCode = 200;
     res.end(JSON.stringify({ key, profile: sanitizeProfile(rawProfile) }));
   } catch (e) {
+    console.error('profile handler failed', e);
     res.setHeader('Content-Type', 'application/json');
     res.statusCode = 500;
-    res.end(JSON.stringify({ error: e?.message || 'Internal error' }));
+    res.end(JSON.stringify({ error: 'Internal error' }));
   }
 }

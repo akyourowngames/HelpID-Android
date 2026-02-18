@@ -88,8 +88,9 @@ export default async function handler(req, res) {
       })
     );
   } catch (e) {
+    console.error('mint handler failed', e);
     res.setHeader('Content-Type', 'application/json');
     res.statusCode = 500;
-    res.end(JSON.stringify({ error: e?.message || 'Internal error' }));
+    res.end(JSON.stringify({ error: 'Internal error' }));
   }
 }
