@@ -1,108 +1,82 @@
-# Helper-ID
+# HelpID Android
 
-Emergency identity platform with:
-- an Android app (`app/`) for creating and sharing emergency profile data
-- a web app + serverless APIs (`helper-id/`) for public profile access, short-lived share links, and Gemini proxy calls
+![GitHub last commit](https://img.shields.io/github/last-commit/akyourowngames/=flat-square)
+![GitHub repo size](https://img.shields.io/github/repo-size/akyourowngames/=flat-square)
+![GitHub stars](https://img.shields.io/github/stars/akyourowngames/=flat-square)
+![Built with Kotlin](https://img.shields.io/badge/built%20with-Kotlin-111827?style=flat-square)
 
-## Repository Layout
+> An Android SOS and emergency profile app using QR and NFC for faster responder access.
 
-`app/` Android (Kotlin + Jetpack Compose + Firebase + Room)  
-`helper-id/` Vite + React frontend and Vercel serverless APIs (`api/*.js`)  
-`gradle/`, `gradlew*` Android build tooling
+## Overview
 
-## Main Features
+HelpID Android is a safety-tech project that lets users prepare emergency information that can be accessed quickly through QR and NFC flows. The goal is to make critical medical context easier to reach when every second matters.
 
-- Emergency ID card UI with profile, medical notes, and emergency contacts
-- SOS flow with SMS + optional location link
-- Offline-first profile behavior (Room cache + pending sync)
-- Anonymous Firebase auth bootstrap and Firestore profile storage
-- Shareable emergency profile links minted via `/api/mint` and resolved by `/api/profile`
-- Gemini server-side proxy endpoint at `/api/gemini` (API key stays server-side)
+## Live Demo
 
-## Prerequisites
+[https://helper-id.vercel.app/](https://helper-id.vercel.app/)
 
-- Android Studio (latest stable recommended)
-- JDK 17 (Android Gradle Plugin 8.x compatibility)
-- Node.js 18+ and npm (for `helper-id/`)
-- Firebase project configured for:
-  - Anonymous Authentication
-  - Firestore Database
+## Highlights
 
-## Android App Setup (`app/`)
+- Emergency profile concept for critical health information
+- QR and NFC based access patterns
+- Android-first implementation in Kotlin
+- Built for accessibility, speed, and real-world emergency scenarios
+- Companion web presence for product discovery
 
-1. Ensure `app/google-services.json` is present and matches your Firebase project.
-2. Open the repository root in Android Studio.
-3. Sync Gradle.
-4. Run on emulator/device.
+## Built For
 
-CLI build:
+- Emergency preparedness
+- Healthcare and safety-tech prototyping
+- Android portfolio work
+- Open-source impact projects
 
-```bash
-./gradlew :app:assembleDebug
-```
+## Tech Stack
 
-Windows PowerShell:
+- Kotlin
+- Android
+- NFC workflows
+- QR code emergency access
+- Mobile-first product design
+
+## Quick Start
 
 ```powershell
-.\gradlew.bat :app:assembleDebug
+git clone https://github.com/akyourowngames/HelpID-Android.git
+cd HelpID-Android
+Open the project in Android Studio
+Let Gradle sync dependencies
 ```
 
-## Web App + API Setup (`helper-id/`)
+## Run Locally
 
-1. Install dependencies:
-
-```bash
-cd helper-id
-npm install
+```powershell
+Connect an Android device or start an emulator
+Run the app from Android Studio
 ```
 
-2. Create `.env.local` in `helper-id/` with required values:
+## Project Structure
 
-```env
-GEMINI_API_KEY=your_gemini_key
-FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
-PROFILE_JWT_SECRET=replace_with_a_long_random_secret
+```text
+app/        Android application source
+gradle/     Gradle wrapper and build support
+build.gradle / settings.gradle  project configuration
 ```
 
-Notes:
-- `FIREBASE_SERVICE_ACCOUNT_KEY` must be a JSON string (single line) for `firebase-admin`.
-- `PROFILE_JWT_SECRET` signs temporary profile access tokens used by `/api/mint` and `/api/profile`.
+## Roadmap
 
-3. Run local dev server:
+- Add screenshots of onboarding and emergency card flows
+- Document NFC testing requirements
+- Add privacy and safety notes for medical data
+- Publish release builds and changelog
 
-```bash
-npm run dev
-```
+## Notes
 
-4. Build production bundle:
+- Medical and emergency apps should be reviewed carefully before real-world use.
 
-```bash
-npm run build
-```
+## Contributing
 
-## API Endpoints (`helper-id/api`)
+Contributions, ideas, and polish suggestions are welcome. Open an issue with a clear problem statement or create a focused pull request.
 
-- `POST /api/mint`
-  - Verifies Firebase ID token from `Authorization: Bearer <token>`
-  - Generates/reuses public key
-  - Returns signed temporary URL (`/e/:key?t=...`)
-- `GET /api/profile?key=<publicKey>&t=<jwt>`
-  - Validates token
-  - Maps public key to UID
-  - Returns sanitized profile fields only
-- `POST /api/gemini`
-  - Proxies prompt to Gemini model server-side
+## Author
 
-## Recommended Cleanup
-
-- `helper-id/node_modules/` appears committed locally; keep it gitignored and out of source control.
-- `local.properties` is machine-specific for Android SDK paths; do not commit personalized values.
-
-  ## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=akyourowngames/HelpID-Android&type=date&legend=top-left)](https://www.star-history.com/#akyourowngames/HelpID-Android&type=date&legend=top-left)
-
-## License
-
-No license file is currently present in the repository. Add one if this project will be shared publicly.
-
+Built by [Krish](https://github.com/akyourowngames). If this project helped you or sparked an idea, consider starring the repo.
