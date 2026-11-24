@@ -31,15 +31,7 @@ const MarketingSite: React.FC = () => {
         </Routes>
       </main>
       <Footer />
-      {showStickyCTA && (
-        <StickyCTA
-          onClick={() => {
-            // This is a bit of a hack, we should ideally use react-router-dom's navigation
-            // but for now, this will work.
-            window.location.href = '/product';
-          }}
-        />
-      )}
+      {showStickyCTA && <StickyCTA />}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Apple, Smartphone, Shield, Wifi, Zap, Lock, QrCode, Download, Play } from 'lucide-react';
+import { Smartphone, Shield, Wifi, Zap, Lock, QrCode, Download } from 'lucide-react';
+import { APK_DOWNLOAD_URL } from '../constants';
 
 export const ProductPage: React.FC = () => {
   return (
@@ -15,29 +16,20 @@ export const ProductPage: React.FC = () => {
                 Security in <br/> your pocket.
              </h1>
              <p className="text-xl text-gray-500 mb-10 leading-relaxed max-w-md">
-                The companion app that speaks for you. Set up your medical profile, emergency contacts, and lock screen widgets in seconds.
+                The companion app that speaks for you. Set up your medical profile, emergency contacts, and a QR card that responders can scan in seconds.
              </p>
              <div className="flex flex-wrap gap-4">
-                <button 
+                <a
+                    href={APK_DOWNLOAD_URL}
                     className="flex items-center gap-3 bg-brand-black text-white px-8 py-4 rounded-full font-medium hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-black group"
-                    aria-label="Download on the App Store"
-                >
-                    <Apple className="w-6 h-6 fill-current" />
-                    <div className="text-left leading-tight">
-                        <div className="text-[10px] uppercase opacity-70 font-semibold tracking-wide">Download on the</div>
-                        <div className="text-sm font-bold group-hover:underline">App Store</div>
-                    </div>
-                </button>
-                <button 
-                    className="flex items-center gap-3 bg-white border border-gray-200 text-brand-black px-8 py-4 rounded-full font-medium hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-black group"
-                    aria-label="Get it on Google Play"
+                    aria-label="Download the Android APK"
                 >
                     <Smartphone className="w-6 h-6" />
                     <div className="text-left leading-tight">
-                        <div className="text-[10px] uppercase opacity-70 font-semibold tracking-wide">Get it on</div>
-                        <div className="text-sm font-bold group-hover:underline">Google Play</div>
+                        <div className="text-[10px] uppercase opacity-70 font-semibold tracking-wide">Download for</div>
+                        <div className="text-sm font-bold group-hover:underline">Android APK</div>
                     </div>
-                </button>
+                </a>
              </div>
           </div>
           
@@ -183,15 +175,13 @@ export const ProductPage: React.FC = () => {
              <div className="bg-white rounded-[2rem] p-8 border border-gray-100 md:col-span-2 flex flex-col md:flex-row items-center gap-8 group hover:border-brand-black/10 transition-colors">
                  <div className="flex-1">
                      <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-brand-yellow transition-colors">
-                        <Download className="w-6 h-6 text-brand-black" />
+                        <QrCode className="w-6 h-6 text-brand-black" />
                      </div>
-                     <h3 className="text-2xl font-bold mb-2">Widget Support</h3>
-                     <p className="text-gray-500 leading-relaxed">Add emergency shortcuts directly to your lock screen for even faster access.</p>
+                     <h3 className="text-2xl font-bold mb-2">Offline QR card</h3>
+                     <p className="text-gray-500 leading-relaxed">Generate a QR that works without a connection and opens a read-only emergency card in any browser.</p>
                  </div>
-                 <div className="flex gap-2 opacity-50 grayscale group-hover:grayscale-0 transition-all">
-                     <div className="w-24 h-24 bg-gray-100 rounded-2xl border-2 border-gray-200"></div>
-                     <div className="w-24 h-24 bg-gray-200 rounded-2xl border-2 border-gray-300"></div>
-                     <div className="w-24 h-24 bg-brand-yellow/20 rounded-2xl border-2 border-brand-yellow"></div>
+                 <div className="w-40 h-40 bg-white border border-gray-200 rounded-3xl shadow-sm flex items-center justify-center p-4">
+                     <QrCode className="w-24 h-24 text-brand-black" strokeWidth={1.2} />
                  </div>
              </div>
 
@@ -208,10 +198,10 @@ export const ProductPage: React.FC = () => {
                    <p className="text-xl mb-12 max-w-2xl mx-auto opacity-80">Download Helper ID today and join thousands of users who are prepared for the unexpected.</p>
                    
                    <div className="flex flex-col md:flex-row justify-center items-center gap-4">
-                        <button className="bg-brand-black text-white px-10 py-5 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-xl">
-                            Download Now
-                        </button>
-                        <span className="text-sm font-medium opacity-60">Available for iOS & Android</span>
+                        <a href={APK_DOWNLOAD_URL} className="bg-brand-black text-white px-10 py-5 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-xl">
+                            Download APK
+                        </a>
+                        <span className="text-sm font-medium opacity-60">Android APK · free · no Play Store required</span>
                    </div>
                </div>
            </div>

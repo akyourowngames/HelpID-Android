@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { APP_NAME, ROBOT_NAME } from '../constants';
+import { APP_NAME, ROBOT_NAME, APK_DOWNLOAD_URL } from '../constants';
 import { ArrowRight, Twitter, Youtube, Instagram, Disc } from 'lucide-react';
 
 const FOOTER_MESSAGES = [
@@ -67,6 +67,13 @@ export const Footer: React.FC = () => {
                     Secure
                 </span>
             </div>
+
+            <a
+                href={APK_DOWNLOAD_URL}
+                className="bg-brand-black text-white px-8 py-3 rounded-full font-semibold mb-10 hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
+            >
+                Download Android APK
+            </a>
 
             {/* Spinning Icon */}
             <div className="relative group cursor-pointer" aria-hidden="true">

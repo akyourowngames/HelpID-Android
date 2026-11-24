@@ -3,6 +3,11 @@ import { FAQItem } from './types';
 export const APP_NAME = "HELPER ID";
 export const ROBOT_NAME = "Helper ID";
 
+export const APK_DOWNLOAD_URL =
+  "https://github.com/akyourowngames/HelpID-Android/releases/latest/download/helpid.apk";
+export const GITHUB_URL = "https://github.com/akyourowngames/HelpID-Android";
+export const LIVE_SITE_URL = "https://helper-id.vercel.app";
+
 export const FAQS: FAQItem[] = [
   {
     question: `What is ${ROBOT_NAME}?`,
@@ -14,7 +19,7 @@ export const FAQS: FAQItem[] = [
   },
   {
     question: `How does it work when my phone is locked?`,
-    answer: "The information can be accessed even when the phone is locked using NFC tap, QR scan, or emergency mode, allowing strangers or responders to help immediately."
+    answer: "The QR card and secure link open a read-only emergency profile in any browser, even if the phone is locked. Native lock-screen and NFC access depends on the Android build and device support."
   },
   {
     question: `What information does it provide?`,
@@ -26,7 +31,11 @@ export const FAQS: FAQItem[] = [
   },
   {
     question: `Is my data private?`,
-    answer: "Helper ID is built with a privacy‑first, offline‑ready, and user‑controlled approach. You decide what information is shared."
+    answer: "Helper ID is built with a privacy-first, offline-ready, and user-controlled approach. Profiles stay on your device unless cloud sync is enabled, and sensitive fields are encrypted at rest."
+  },
+  {
+    question: `How do I install the app?`,
+    answer: "Download the Android APK directly from GitHub Releases. It installs alongside Expo Go builds and does not require the Play Store."
   }
 ];
 

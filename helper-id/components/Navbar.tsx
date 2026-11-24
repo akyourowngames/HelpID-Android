@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Disc } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { APP_NAME } from '../constants';
+import { APK_DOWNLOAD_URL, APP_NAME } from '../constants';
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -73,6 +73,12 @@ export const Navbar: React.FC = () => {
              >
                 About
              </Link>
+             <a
+                href={APK_DOWNLOAD_URL}
+                className="bg-brand-black text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
+             >
+                Download APK
+             </a>
           </div>
 
           {/* Hamburger / Menu Trigger */}
@@ -113,13 +119,12 @@ export const Navbar: React.FC = () => {
                 About
             </Link>
             <div className="mt-8">
-                <Link
-                    to="/product"
-                    onClick={closeMobileMenu}
+                <a
+                    href={APK_DOWNLOAD_URL}
                     className="bg-brand-black text-white px-8 py-4 rounded-full text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-black"
                 >
-                    Get App
-                </Link>
+                    Download APK
+                </a>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, Zap, Gift, Users, ShieldCheck, Globe, Award } from 'lucide-react';
+import { APK_DOWNLOAD_URL } from '../constants';
 
 export const Mission: React.FC = () => {
   return (
@@ -82,10 +83,10 @@ export const Mission: React.FC = () => {
         <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
           We are more than just an app; we are a movement to create a safer, more connected world. Join us on our mission to empower individuals, strengthen communities, and save lives.
         </p>
-        <button className="bg-brand-black text-white px-10 py-5 rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-2 mx-auto group">
-            Get Helper ID 
+        <a href={APK_DOWNLOAD_URL} className="bg-brand-black text-white px-10 py-5 rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-2 mx-auto group w-fit">
+            Download APK
             <Users className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-        </button>
+        </a>
       </section>
 
     </div>

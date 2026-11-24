@@ -1,26 +1,46 @@
-# Ignore Gradle project-specific cache directory
-.gradle
-
-# Ignore Gradle build output directory
-build
-
-# Android local/machine-specific files
-local.properties
-app/google-services.json
-*.keystore
-*.jks
-
-# Android app outputs
-app/build/
-
-# Node/Web artifacts
+# Dependencies
+node_modules/
 helper-id/node_modules/
+mobile/node_modules/
+
+# Expo / native build output
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/dist/
+mobile/web-build/
+.expo/
+
+# Web build output
 helper-id/dist/
 helper-id/.vercel/
+
+# Local env and secrets
+.env
+.env.*
+!.env.example
+mobile/.env
 helper-id/.env
 helper-id/.env.*
+*.keystore
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
 
-# IDE/system
+# Build artifacts
+*.apk
+*.aab
+build/
+.gradle/
+local.properties
+
+# Tooling / OS
+.qoder/
+.tmp-audit/
+.qodersecignore
 .idea/
 .vscode/
 *.iml

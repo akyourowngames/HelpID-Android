@@ -3,6 +3,7 @@ import { Hero } from './Hero';
 import { FeatureGrid } from './FeatureGrid';
 import { TextSection } from './TextSection';
 import { FAQ } from './FAQ';
+import { APK_DOWNLOAD_URL } from '../constants';
 
 export const Home: React.FC = () => {
   return (
@@ -68,9 +69,9 @@ export const Home: React.FC = () => {
                     <div className="w-8 h-8 bg-white rounded-full"></div>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-medium mb-12">Emergencies create panic.<br/>Be prepared with Helper ID.</h2>
-                <button className="bg-brand-black text-white px-8 py-4 rounded-full font-medium hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2">
-                    Get Protected
-                </button>
+                <a href={APK_DOWNLOAD_URL} className="bg-brand-black text-white px-8 py-4 rounded-full font-medium hover:scale-105 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2">
+                    Download APK
+                </a>
              </div>
         </section>
 
